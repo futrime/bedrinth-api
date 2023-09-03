@@ -1,0 +1,19 @@
+{
+  "name": "lip-index",
+  "version": "0.1.0",
+  "description": "API server for querying published Lip teeth.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LipPkg/LipIndex.git"
+  },
+  "author": "LiteLDev",
+  "license": "GPL-3.0-only",
+  "devDependencies": {
+    "eslint": "^8.48.0",
+    "eslint-config-google": "^0.14.0"
+  }
+}
