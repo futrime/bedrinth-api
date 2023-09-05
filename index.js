@@ -1,12 +1,12 @@
 'use strict'
 
-import 'dotenv/config'
+import 'dotenv/config';
 
-import express from 'express';
-import process from 'process';
-import morgan from 'morgan';
 import {consola} from 'consola';
 import cors from 'cors';
+import express from 'express';
+import morgan from 'morgan';
+import process from 'process';
 
 import {router as routerSearchTeeth} from './routes/search/teeth.js';
 import {router as routerTeeth} from './routes/teeth.js';
@@ -30,7 +30,7 @@ app.use('/search/teeth', routerSearchTeeth);
 app.use('/teeth', routerTeeth);
 
 // Set default route.
-app.use((req, res) => {
+app.use((_, res) => {
   res.status(404).send({
     code: 404,
     message: 'Not found.',

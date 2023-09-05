@@ -1,11 +1,11 @@
 'use strict'
 
-import{consola} from 'consola';
+import acceptLanguageParser from 'accept-language-parser';
+import {consola} from 'consola';
 import * as express from 'express';
 import httpErrors from 'http-errors';
-import {isValidVersionString} from '../lib/version.js';
 import {createToothMetadataFromJsonString} from '../lib/tooth_metadata.js';
-import acceptLanguageParser from 'accept-language-parser';
+import {isValidVersionString} from '../lib/version.js';
 
 
 /**
