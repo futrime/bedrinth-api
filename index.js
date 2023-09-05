@@ -6,8 +6,9 @@ import express from 'express';
 import process from 'process';
 import morgan from 'morgan';
 import {consola} from 'consola';
+import cors from 'cors';
 
-import {router as routerSearchTeeth} from './routes/search_teeth.js';
+import {router as routerSearchTeeth} from './routes/search/teeth.js';
 import {router as routerTeeth} from './routes/teeth.js';
 
 
@@ -22,7 +23,7 @@ consola.level = process.env.LOG_LEVEL;
 const app = express();
 
 app.use(morgan('tiny'));
-
+app.use(cors());
 app.use(express.urlencoded({extended: false}));
 
 app.use('/search/teeth', routerSearchTeeth);
