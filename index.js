@@ -28,6 +28,14 @@ app.use(express.urlencoded({extended: false}));
 app.use('/search/teeth', routerSearchTeeth);
 app.use('/teeth', routerTeeth);
 
+// Set default route.
+app.use((req, res) => {
+  res.status(404).send({
+    code: 404,
+    message: 'Not found.',
+  });
+});
+
 app.listen(process.env.LISTEN_PORT, () => {
   consola.info(`Server is listening on port ${process.env.LISTEN_PORT}`);
 });
