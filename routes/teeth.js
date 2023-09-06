@@ -132,8 +132,8 @@ async function fetchReadmeForLang(owner, repo, versionString, lang) {
           versionString}/README.${lang}.md`;
 
   const response = await fetch(readmeUrl);
-  consola.log(
-      `FETCH GET ${readmeUrl} ${response.status} ${response.statusText}`);
+  consola.debug(
+      `fetch(${readmeUrl}) ${response.status} ${response.statusText}`);
   if (!response.ok) {
     return null;
   }
@@ -155,8 +155,8 @@ async function fetchToothMetadata(owner, repo, versionString) {
       versionString}/tooth.json`;
 
   const response = await fetch(toothJsonUrl);
-  consola.log(
-      `FETCH GET ${toothJsonUrl} ${response.status} ${response.statusText}`);
+  consola.debug(
+      `fetch(${toothJsonUrl}) ${response.status} ${response.statusText}`);
   if (!response.ok) {
     throw httpErrors(
         response.status,
@@ -176,12 +176,16 @@ async function fetchToothMetadata(owner, repo, versionString) {
  * @return {Promise<Array<string>>} The list of available versions.
  */
 async function fetchVersionList(owner, repo) {
+  // To lower case because goproxy.io only accepts lower case owner and repo.
+  owner = owner.toLowerCase();
+  repo = repo.toLowerCase();
+
   const versionListUrl =
       `https://goproxy.io/github.com/${owner}/${repo}/@v/list`;
 
   const response = await fetch(versionListUrl);
-  consola.log(
-      `FETCH GET ${versionListUrl} ${response.status} ${response.statusText}`);
+  consola.debug(
+      `fetch(${versionListUrl}) ${response.status} ${response.statusText}`);
   if (!response.ok) {
     throw httpErrors(
         response.status,
