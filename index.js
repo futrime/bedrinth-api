@@ -40,10 +40,18 @@ try {
         logging: false,
       });
 
-  try {
-    await sequelize.authenticate();
-  } catch (err) {
-    throw new Error(`Failed to connect to database: ${err.message}`);
+  let /** @type {boolean} */ isConnected = false;
+  while (!isConnected) {
+    try {
+      await sequelize.authenticate();
+      isConnected = true;
+
+    } catch (err) {
+      consola.error(`Failed to connect to database postgres://${
+          process.env.POSTGRES_USER}@${process.env.POSTGRES_HOST}:${
+          process.env.POSTGRES_PORT}/${process.env.POSTGRES_DATABASE}: ${
+          err.message}`);
+    }
   }
 
   const toothModel = createToothModel(sequelize);

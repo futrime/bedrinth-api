@@ -1,8 +1,10 @@
 services:
   app:
     image: futrime/lipindex:latest
+    depends_on:
+      - postgres
     environment:
-      GITHUB_BOT_TOKEN: $GITHUB_BOT_TOKEN
+      GITHUB_BOT_TOKEN:
       NODE_ENV: production
     links:
       - postgres

@@ -16,6 +16,12 @@ Download the `docker-compose.yml` file from this repository.
 curl -LO https://raw.githubusercontent.com/LipPkg/LipIndex/HEAD/docker-compose.yml
 ```
 
+Create a `.env` file in the same directory as the `docker-compose.yml` file. The `.env` file should contain the following content.
+
+```bash
+GITHUB_BOT_TOKEN=<Your GitHub PAT>
+```
+
 Then, run the following command to start the server.
 
 ```bash
@@ -25,7 +31,7 @@ docker-compose up -d
 If you are not root, you may need to run the following command instead.
 
 ```bash
-sudo docker-compose up -d -e GITHUB_BOT_TOKEN=<Your GitHub PAT>
+sudo docker-compose up -d
 ```
 
 To stop the server, run the following command.
