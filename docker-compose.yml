@@ -1,0 +1,17 @@
+services:
+  app:
+    image: futrime/lipindex:latest
+    environment:
+      GITHUB_BOT_TOKEN: $GITHUB_BOT_TOKEN
+      NODE_ENV: production
+    links:
+      - postgres
+    ports:
+      - 11400:11400
+    restart: always
+  
+  postgres:
+    image: postgres:alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+    restart: always

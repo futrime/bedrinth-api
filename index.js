@@ -18,9 +18,10 @@ try {
   // Apply default configuration if not set.
   process.env.GITHUB_BOT_EXPIRE = process.env.GITHUB_BOT_EXPIRE || '600';
   process.env.GITHUB_BOT_INTERVAL = process.env.GITHUB_BOT_INTERVAL || '60';
+  process.env.GITHUB_BOT_TOKEN = process.env.GITHUB_BOT_TOKEN || undefined;
   process.env.LISTEN_PORT = process.env.LISTEN_PORT || '11400';
   process.env.LOG_LEVEL = process.env.LOG_LEVEL || '3';
-  process.env.POSTGRES_HOST = process.env.POSTGRES_HOST || 'localhost';
+  process.env.POSTGRES_HOST = process.env.POSTGRES_HOST || 'postgres';
   process.env.POSTGRES_PORT = process.env.POSTGRES_PORT || '5432';
   process.env.POSTGRES_USER = process.env.POSTGRES_USER || 'postgres';
   process.env.POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || 'postgres';
