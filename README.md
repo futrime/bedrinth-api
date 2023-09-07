@@ -53,5 +53,5 @@ docker run -d -e POSTGRES_PASSWORD=postgres --name lipindex-postgres --restart=a
 Install LipIndex.
 
 ```bash
-docker run -d -e GITHUB_BOT_TOKEN=<Your GitHub PAT> -e NODE_ENV=production --link lipindex-postgres:postgres -p <API port>:11400 futrime/lipindex
+docker run -d -e GITHUB_BOT_TOKEN=<Your GitHub PAT> -e NODE_ENV=production --link lipindex-postgres:postgres -p 127.0.0.1:11400:11400 futrime/lipindex
 ```

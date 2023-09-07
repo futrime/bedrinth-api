@@ -9,7 +9,7 @@ services:
     links:
       - postgres
     ports:
-      - 11400:11400
+      - 127.0.0.1:11400:11400
     restart: always
   
   postgres:
