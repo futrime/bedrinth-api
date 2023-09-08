@@ -8,6 +8,7 @@ import express from 'express';
 import morgan from 'morgan';
 import process from 'process';
 import {Sequelize} from 'sequelize';
+import delay from 'delay';
 
 import {router as routerSearchTeeth} from './routes/search/teeth.js';
 import {router as routerTeeth} from './routes/teeth.js';
@@ -47,10 +48,12 @@ try {
       isConnected = true;
 
     } catch (err) {
-      consola.error(`Failed to connect to database postgres://${
-          process.env.POSTGRES_USER}@${process.env.POSTGRES_HOST}:${
-          process.env.POSTGRES_PORT}/${process.env.POSTGRES_DATABASE}: ${
-          err.message}`);
+      consola.info(
+          `Database not ready (postgres://${process.env.POSTGRES_USER}@${
+              process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${
+              process.env.POSTGRES_DATABASE}): ${err.message}`);
+      consola.info('Retrying in 5 seconds...');
+      await delay(5000);
     }
   }
 
@@ -77,9 +80,9 @@ try {
   app.use('/teeth', routerTeeth);
 
   app.use((_, res) => {
-    res.status(404).send({
-      code: 404,
-      message: 'Not found.',
+    res.status(403).send({
+      code: 403,
+      message: 'Forbidden.',
     });
   });  // Set default route.
 

@@ -8,29 +8,15 @@ import {createToothMetadataFromJsonString} from '../lib/tooth_metadata.js';
 import {isValidVersionString} from '../lib/version.js';
 
 
-/**
- * The regular expression for matching the tooth path.
- * @type {RegExp}
- * @const
- */
-const TOOTH_PATH_REGEXP =
-    /^github.com\/(?<owner>[a-zA-Z0-9-]+)\/(?<repo>[a-zA-Z0-9-_.]+)$/;
-
 export const router = express.Router();
 
-router.get('/:tooth/:version', async (req, res) => {
+router.get('/:owner/:repo/:version', async (req, res) => {
   try {
-    // No need to check if tooth and version is undefined because
+    // No need to check if owner, repo and version is undefined because
     // express will return 404 if the route doesn't match.
 
-    // Get parameters.
-    const toothPathMatch = TOOTH_PATH_REGEXP.exec(req.params.tooth);
-    if (toothPathMatch === null) {
-      throw new httpErrors.BadRequest('Invalid parameter - tooth.');
-    }
-
-    const ownerParam = toothPathMatch.groups.owner;
-    const repoParam = toothPathMatch.groups.repo;
+    const /** @type {string} */ ownerParam = req.params.owner;
+    const /** @type {string} */ repoParam = req.params.repo;
 
     const versionParam = req.params.version;
     if (!isValidVersionString(versionParam)) {
@@ -55,6 +41,8 @@ router.get('/:tooth/:version', async (req, res) => {
       code: 200,
       data: {
         tooth: toothMetadata.getToothPath(),
+        owner: ownerParam,
+        repo: repoParam,
         version: toothMetadata.getVersion().toString(),
         name: toothMetadata.getName(),
         description: toothMetadata.getDescription(),
