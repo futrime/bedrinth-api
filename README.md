@@ -16,10 +16,13 @@ Download the `docker-compose.yml` file from this repository.
 curl -LO https://raw.githubusercontent.com/LipPkg/LipIndex/HEAD/docker-compose.yml
 ```
 
-Create a `.env` file in the same directory as the `docker-compose.yml` file. The `.env` file should contain the following content.
+Edit the `docker-compose.yml` file to set the `GITHUB_BOT_TOKEN` environment variable. You can also set the `GITHUB_BOT_EXPIRE` and `GITHUB_BOT_INTERVAL` environment variables if you want. The default values are `600` and `60` respectively.
 
-```bash
-GITHUB_BOT_TOKEN=<Your GitHub PAT>
+```yaml
+    environment:
+      GITHUB_BOT_EXPIRE: 600
+      GITHUB_BOT_INTERVAL: 60
+      GITHUB_BOT_TOKEN: YOUR_GITHUB_TOKEN
 ```
 
 Then, run the following command to start the server.
@@ -53,5 +56,5 @@ docker run -d -e POSTGRES_PASSWORD=postgres --name lipindex-postgres --restart=a
 Install LipIndex.
 
 ```bash
-docker run -d -e GITHUB_BOT_TOKEN=<Your GitHub PAT> -e NODE_ENV=production --link lipindex-postgres:postgres -p <API port>:11400 futrime/lipindex
+docker run -d -e GITHUB_BOT_TOKEN=<Your GitHub PAT> -e NODE_ENV=production --link lipindex-postgres:postgres -p 127.0.0.1:11400:11400 futrime/lipindex
 ```

@@ -8,29 +8,15 @@ import {createToothMetadataFromJsonString} from '../lib/tooth_metadata.js';
 import {isValidVersionString} from '../lib/version.js';
 
 
-/**
- * The regular expression for matching the tooth path.
- * @type {RegExp}
- * @const
- */
-const TOOTH_PATH_REGEXP =
-    /^github.com\/(?<owner>[a-zA-Z0-9-]+)\/(?<repo>[a-zA-Z0-9-_.]+)$/;
-
 export const router = express.Router();
 
-router.get('/:tooth/:version', async (req, res) => {
+router.get('/:owner/:repo/:version', async (req, res) => {
   try {
-    // No need to check if tooth and version is undefined because
+    // No need to check if owner, repo and version is undefined because
     // express will return 404 if the route doesn't match.
 
-    // Get parameters.
-    const toothPathMatch = TOOTH_PATH_REGEXP.exec(req.params.tooth);
-    if (toothPathMatch === null) {
-      throw new httpErrors.BadRequest('Invalid parameter - tooth.');
-    }
-
-    const ownerParam = toothPathMatch.groups.owner;
-    const repoParam = toothPathMatch.groups.repo;
+    const /** @type {string} */ ownerParam = req.params.owner;
+    const /** @type {string} */ repoParam = req.params.repo;
 
     const versionParam = req.params.version;
     if (!isValidVersionString(versionParam)) {
@@ -55,6 +41,8 @@ router.get('/:tooth/:version', async (req, res) => {
       code: 200,
       data: {
         tooth: toothMetadata.getToothPath(),
+        owner: ownerParam,
+        repo: repoParam,
         version: toothMetadata.getVersion().toString(),
         name: toothMetadata.getName(),
         description: toothMetadata.getDescription(),
@@ -131,9 +119,8 @@ async function fetchReadmeForLang(owner, repo, versionString, lang) {
       `https://raw.githubusercontent.com/${owner}/${repo}/v${
           versionString}/README.${lang}.md`;
 
+  consola.debug(`fetch(${readmeUrl})`);
   const response = await fetch(readmeUrl);
-  consola.debug(
-      `fetch(${readmeUrl}) ${response.status} ${response.statusText}`);
   if (!response.ok) {
     return null;
   }
@@ -154,13 +141,11 @@ async function fetchToothMetadata(owner, repo, versionString) {
   const toothJsonUrl = `https://raw.githubusercontent.com/${owner}/${repo}/v${
       versionString}/tooth.json`;
 
+  consola.debug(`fetch(${toothJsonUrl})`);
   const response = await fetch(toothJsonUrl);
-  consola.debug(
-      `fetch(${toothJsonUrl}) ${response.status} ${response.statusText}`);
   if (!response.ok) {
     throw httpErrors(
-        response.status,
-        `Failed to fetch tooth.json: ${await response.text()}`);
+        response.status, `Failed to fetch tooth.json: ${response.statusText}`);
   }
 
   const toothMetadata =
@@ -183,13 +168,12 @@ async function fetchVersionList(owner, repo) {
   const versionListUrl =
       `https://goproxy.io/github.com/${owner}/${repo}/@v/list`;
 
+  consola.debug(`fetch(${versionListUrl})`);
   const response = await fetch(versionListUrl);
-  consola.debug(
-      `fetch(${versionListUrl}) ${response.status} ${response.statusText}`);
   if (!response.ok) {
     throw httpErrors(
         response.status,
-        `Failed to fetch version list: ${await response.text()}`);
+        `Failed to fetch version list: ${response.statusText}`);
   }
 
   const goTagList = (await response.text())
