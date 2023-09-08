@@ -4,14 +4,14 @@ services:
     depends_on:
       - postgres
     environment:
-      GITHUB_BOT_EXPIRE: 600
-      GITHUB_BOT_INTERVAL: 60
-      GITHUB_BOT_TOKEN: YOUR_GITHUB_TOKEN
+      GITHUB_BOT_EXPIRE: 86400
+      GITHUB_BOT_INTERVAL: 600
+      GITHUB_BOT_TOKEN: <YOUR_GITHUB_TOKEN>
       NODE_ENV: production
     links:
       - postgres
     ports:
-      - 127.0.0.1:11400:11400
+      - 127.0.0.1:11400:80
     restart: always
   
   postgres:
