@@ -119,9 +119,8 @@ async function fetchReadmeForLang(owner, repo, versionString, lang) {
       `https://raw.githubusercontent.com/${owner}/${repo}/v${
           versionString}/README.${lang}.md`;
 
+  consola.debug(`fetch(${readmeUrl})`);
   const response = await fetch(readmeUrl);
-  consola.debug(
-      `fetch(${readmeUrl}) ${response.status} ${response.statusText}`);
   if (!response.ok) {
     return null;
   }
@@ -142,13 +141,11 @@ async function fetchToothMetadata(owner, repo, versionString) {
   const toothJsonUrl = `https://raw.githubusercontent.com/${owner}/${repo}/v${
       versionString}/tooth.json`;
 
+  consola.debug(`fetch(${toothJsonUrl})`);
   const response = await fetch(toothJsonUrl);
-  consola.debug(
-      `fetch(${toothJsonUrl}) ${response.status} ${response.statusText}`);
   if (!response.ok) {
     throw httpErrors(
-        response.status,
-        `Failed to fetch tooth.json: ${await response.text()}`);
+        response.status, `Failed to fetch tooth.json: ${response.statusText}`);
   }
 
   const toothMetadata =
@@ -171,13 +168,12 @@ async function fetchVersionList(owner, repo) {
   const versionListUrl =
       `https://goproxy.io/github.com/${owner}/${repo}/@v/list`;
 
+  consola.debug(`fetch(${versionListUrl})`);
   const response = await fetch(versionListUrl);
-  consola.debug(
-      `fetch(${versionListUrl}) ${response.status} ${response.statusText}`);
   if (!response.ok) {
     throw httpErrors(
         response.status,
-        `Failed to fetch version list: ${await response.text()}`);
+        `Failed to fetch version list: ${response.statusText}`);
   }
 
   const goTagList = (await response.text())

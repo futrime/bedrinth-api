@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Problems caused by URI encoding.
+- Wrong debug messages.
 
 ## [0.1.0] - 2023-09-07
 
