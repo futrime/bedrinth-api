@@ -9,7 +9,7 @@ import{DataTypes} from 'sequelize';
  * @return {import('sequelize').Model} The Tooth model.
  */
 export default (sequelize) => sequelize.define('Tooth', {
-  tooth: {
+  toothRepoPath: {
     type: DataTypes.STRING,
     allowNull: false,
     primaryKey: true,
@@ -26,12 +26,12 @@ export default (sequelize) => sequelize.define('Tooth', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  latestVersion: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
   tags: {
     type: DataTypes.ARRAY(DataTypes.STRING),
     allowNull: false,
   },
+  versions: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    allowNull: false,
+  }
 })
