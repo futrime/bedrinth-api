@@ -8,4 +8,4 @@ RUN npm install --production --silent
 
 ENV NODE_ENV=production
 CMD ["npm", "start"]
-EXPOSE 11400
+EXPOSE 80
