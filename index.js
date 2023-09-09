@@ -82,7 +82,7 @@ try {
   app.use((_, res) => {
     res.status(403).send({
       code: 403,
-      message: 'Forbidden.',
+      message: 'Forbidden',
     });
   });  // Set default route.
 

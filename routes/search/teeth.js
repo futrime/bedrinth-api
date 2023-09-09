@@ -1,9 +1,9 @@
 'use strict'
 
+import{consola} from 'consola';
 import * as express from 'express';
 import httpErrors from 'http-errors';
 import sequelize from 'sequelize';
-
 
 const ITEMS_PER_PAGE = 20;
 
@@ -20,12 +20,11 @@ router.get('/', async (req, res) => {
     const /** @type {string} */ pageParam = req.query.page || '1';
     if (!/^[1-9]\d{0,9}$/.test(pageParam)) {  // pageParam must be an natural
                                               // number without leading zeros.
-      throw new httpErrors.BadRequest('Invalid parameter - page.');
+      throw new httpErrors.BadRequest(`invalid parameter 'page'`);
     }
     const /** @type {number} */ page = Number(pageParam);
 
-    const /** @type {import('sequelize').Model} */ toothModel =
-        req.context.toothModel;
+    const /** @type {sequelize.Model} */ toothModel = req.context.toothModel;
 
     // Query.
     const {count, rows} = await toothModel.findAndCountAll({
@@ -33,7 +32,7 @@ router.get('/', async (req, res) => {
         [sequelize.Op.and]: queryList.map(
             (term, index) => ({
               [sequelize.Op.like]: sequelize.literal(
-                  `concat(tooth, ' ', name, ' ', author, ' ', description, ' ', array_to_string(tags, ' ')) ILIKE :searchTerm${
+                  `CONCAT("toothRepoPath", ' ', name, ' ', author, ' ', description, ' ', array_to_string(tags, ' ')) ILIKE :searchTerm${
                       index}`),
             })),
       },
@@ -45,29 +44,42 @@ router.get('/', async (req, res) => {
 
     // Construct the response.
     res.send({
-      code: 200,
-      max_page: Math.ceil(count / ITEMS_PER_PAGE),
-      list: rows.map((item) => ({
-                       tooth: item.tooth,
-                       name: item.name,
-                       description: item.description,
-                       author: item.author,
-                       latest_version: item.latestVersion,
-                       tags: item.tags,
-                     }))
+      apiVersion: '1',
+      data: {
+        pageIndex: page,
+        totalPages: Math.ceil(count / ITEMS_PER_PAGE),
+        items: rows.map((item) => ({
+                          toothRepoPath: item.toothRepoPath,
+                          toothRepoOwner: item.toothRepoOwner,
+                          toothRepoName: item.toothRepoName,
+                          name: item.name,
+                          description: item.description,
+                          author: item.author,
+                          tags: item.tags,
+                          versions: item.versions,
+                        })),
+      },
     });
 
   } catch (error) {
     if (httpErrors.isHttpError(error)) {
       res.status(error.statusCode).send({
-        code: error.statusCode,
-        message: error.message,
+        apiVersion: '1',
+        error: {
+          code: error.statusCode,
+          message: `Error: ${error.message}`,
+        },
       });
 
     } else {
+      consola.error(`[/search/teeth] ${error.message}`);
+
       res.status(500).send({
-        code: 500,
-        message: 'Internal server error.',
+        apiVersion: '1',
+        error: {
+          code: 500,
+          message: 'Internal Server Error',
+        },
       });
     }
   }

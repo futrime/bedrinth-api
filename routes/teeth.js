@@ -1,11 +1,10 @@
 'use strict'
 
-import acceptLanguageParser from 'accept-language-parser';
-import {consola} from 'consola';
+import{consola} from 'consola';
 import * as express from 'express';
 import httpErrors from 'http-errors';
-import {createToothMetadataFromJsonString} from '../lib/tooth_metadata.js';
 import {isValidVersionString} from '../lib/version.js';
+import sequelize from 'sequelize';
 
 
 export const router = express.Router();
@@ -20,170 +19,72 @@ router.get('/:owner/:repo/:version', async (req, res) => {
 
     const versionParam = req.params.version;
     if (!isValidVersionString(versionParam)) {
-      throw new httpErrors.BadRequest('Invalid parameter - version.');
+      throw new httpErrors.BadRequest(`invalid parameter 'version'`);
     }
 
-    // Get client accepted languages.
-    const acceptedLanguages =
-        [...new Set(acceptLanguageParser.parse(req.headers['accept-language'])
-                        .map((language) => {
-                          return language.code;
-                        }))];
-
-    const [toothMetadata, readme, versionList] = await Promise.all([
-      fetchToothMetadata(ownerParam, repoParam, versionParam),
-      fetchReadme(ownerParam, repoParam, versionParam, acceptedLanguages),
-      fetchVersionList(ownerParam, repoParam),
-    ]);
-
-    // Construct the response.
-    res.send({
-      code: 200,
-      data: {
-        tooth: toothMetadata.getToothPath(),
-        owner: ownerParam,
-        repo: repoParam,
-        version: toothMetadata.getVersion().toString(),
-        name: toothMetadata.getName(),
-        description: toothMetadata.getDescription(),
-        author: toothMetadata.getAuthor(),
-        available_versions: versionList,
-        readme: readme,
-        tags: toothMetadata.getTags(),
-        dependencies: toothMetadata.getDependencies(),
+    const /** @type {sequelize.Model} */ toothModel = req.context.toothModel;
+    const item = await toothModel.findOne({
+      where: {
+        [sequelize.Op.and]: [
+          {
+            toothRepoOwner: {
+              [sequelize.Op.iLike]: ownerParam,
+            },
+          },
+          {
+            toothRepoName: {
+              [sequelize.Op.iLike]: repoParam,
+            },
+          },
+        ],
       }
     });
 
+    if (item === null) {
+      throw new httpErrors.NotFound(
+          `tooth '${ownerParam}/${repoParam}' not found`);
+    }
+
+    // Check if version exists.
+    if (!item.versions.includes(versionParam)) {
+      throw new httpErrors.NotFound(`version '${
+          versionParam}' not found for tooth '${ownerParam}/${repoParam}'`);
+    }
+
+    // Construct the response.
+    res.send({
+      apiVersion: '1',
+      data: {
+        toothRepoPath: item.toothRepoPath,
+        toothRepoOwner: item.toothRepoOwner,
+        toothRepoName: item.toothRepoName,
+        name: item.name,
+        description: item.description,
+        author: item.author,
+        tags: item.tags,
+        versions: item.versions,
+      },
+    });
   } catch (error) {
     if (httpErrors.isHttpError(error)) {
       res.status(error.statusCode).send({
-        code: error.statusCode,
-        message: error.message,
+        apiVersion: '1',
+        error: {
+          code: error.statusCode,
+          message: `Error: ${error.message}`,
+        },
       });
-      return;
 
     } else {
-      consola.error(error);
+      consola.error(`[/teeth] ${error.message}`);
+
       res.status(500).send({
-        code: 500,
-        message: 'Internal server error.',
+        apiVersion: '1',
+        error: {
+          code: 500,
+          message: 'Internal Server Error',
+        },
       });
-      return;
     }
   }
 });
-
-/**
- * Fetches the README.md file from the given owner and repo.
- * @param {string} owner The owner of the tooth.
- * @param {string} repo The name of the tooth.
- * @param {string} versionString The version string.
- * @param {Array<string>} langList The list of 2-char code of accepted
- *     languages.
- * @return {Promise<string|null>} The content of the README.md file.
- */
-async function fetchReadme(owner, repo, versionString, langList) {
-  const promiseList = [];
-
-  for (const lang of langList) {
-    promiseList.push(fetchReadmeForLang(owner, repo, versionString, lang));
-  }
-
-  promiseList.push(fetchReadmeForLang(owner, repo, versionString, undefined));
-
-  const readmeList = await Promise.all(promiseList);
-
-  for (const readme of readmeList) {
-    if (readme !== null) {
-      return readme;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Fetches the README.md file from the given owner and repo for the given
- * language.
- * @param {string} owner The owner of the tooth.
- * @param {string} repo The name of the tooth.
- * @param {string} versionString The version string.
- * @param {string|undefined} lang The language. If undefined, will fetch the
- *    default README.md file.
- * @return {Promise<string|null>} The content of the README.md file.
- */
-async function fetchReadmeForLang(owner, repo, versionString, lang) {
-  const readmeUrl = (lang === undefined) ?
-      `https://raw.githubusercontent.com/${owner}/${repo}/v${
-          versionString}/README.md` :
-      `https://raw.githubusercontent.com/${owner}/${repo}/v${
-          versionString}/README.${lang}.md`;
-
-  consola.debug(`fetch(${readmeUrl})`);
-  const response = await fetch(readmeUrl);
-  if (!response.ok) {
-    return null;
-  }
-
-  return await response.text();
-}
-
-/**
- * Fetches the tooth.json file from the given owner and repo. Then converts it
- * to a ToothMetadata object.
- * @param {string} owner The owner of the tooth.
- * @param {string} repo The name of the tooth.
- * @param {string} versionString The version string.
- * @return {Promise<import('../lib/tooth_metadata.js').ToothMetadata>} The tooth
- *     metadata.
- */
-async function fetchToothMetadata(owner, repo, versionString) {
-  const toothJsonUrl = `https://raw.githubusercontent.com/${owner}/${repo}/v${
-      versionString}/tooth.json`;
-
-  consola.debug(`fetch(${toothJsonUrl})`);
-  const response = await fetch(toothJsonUrl);
-  if (!response.ok) {
-    throw httpErrors(
-        response.status, `Failed to fetch tooth.json: ${response.statusText}`);
-  }
-
-  const toothMetadata =
-      createToothMetadataFromJsonString(await response.text());
-
-  return toothMetadata;
-}
-
-/**
- * Fetches the list of available versions from the given owner and repo.
- * @param {string} owner The owner of the tooth.
- * @param {string} repo The name of the tooth.
- * @return {Promise<Array<string>>} The list of available versions.
- */
-async function fetchVersionList(owner, repo) {
-  // To lower case because goproxy.io only accepts lower case owner and repo.
-  owner = owner.toLowerCase();
-  repo = repo.toLowerCase();
-
-  const versionListUrl =
-      `https://goproxy.io/github.com/${owner}/${repo}/@v/list`;
-
-  consola.debug(`fetch(${versionListUrl})`);
-  const response = await fetch(versionListUrl);
-  if (!response.ok) {
-    throw httpErrors(
-        response.status,
-        `Failed to fetch version list: ${response.statusText}`);
-  }
-
-  const goTagList = (await response.text())
-                        .split('\n')
-                        .slice(0, -1);  // Remove the last empty line.
-
-  // Remove prefix 'v' and suffix '+incompatible'.
-  const versionList = goTagList.map((tag) => {
-    return tag.replace(/^v/, '').replace(/\+incompatible$/, '');
-  });
-
-  return versionList;
-}

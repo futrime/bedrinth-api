@@ -14,6 +14,14 @@ export default (sequelize) => sequelize.define('Tooth', {
     allowNull: false,
     primaryKey: true,
   },
+  toothRepoOwner: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  toothRepoName: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
