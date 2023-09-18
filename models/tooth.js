@@ -39,7 +39,15 @@ export default (sequelize) => sequelize.define('Tooth', {
     allowNull: false,
   },
   versions: {
-    type: DataTypes.ARRAY(DataTypes.STRING),
+    type: DataTypes.ARRAY(DataTypes.JSON),
     allowNull: false,
-  }
-})
+  },
+  latestVersion: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  latestVersionReleaseTime: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+});

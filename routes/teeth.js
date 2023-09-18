@@ -3,7 +3,7 @@
 import{consola} from 'consola';
 import * as express from 'express';
 import httpErrors from 'http-errors';
-import {isValidVersionString} from '../lib/version.js';
+import {isValidVersionString, createVersionFromString} from '../lib/version.js';
 import sequelize from 'sequelize';
 
 
@@ -16,11 +16,6 @@ router.get('/:owner/:repo/:version', async (req, res) => {
 
     const /** @type {string} */ ownerParam = req.params.owner;
     const /** @type {string} */ repoParam = req.params.repo;
-
-    const versionParam = req.params.version;
-    if (!isValidVersionString(versionParam)) {
-      throw new httpErrors.BadRequest(`invalid parameter 'version'`);
-    }
 
     const /** @type {sequelize.Model} */ toothModel = req.context.toothModel;
     const item = await toothModel.findOne({
@@ -45,8 +40,21 @@ router.get('/:owner/:repo/:version', async (req, res) => {
           `tooth '${ownerParam}/${repoParam}' not found`);
     }
 
+    const /** @type {import('../lib/version.js').Version[]} */ versionList =
+        item.versions.map((x) => createVersionFromString(x.version));
+
+    let versionParam = req.params.version;
+    if (versionParam === 'latest') {
+      versionParam = item.latestVersion;
+    }
+
+    if (!isValidVersionString(versionParam)) {
+      throw new httpErrors.BadRequest(`invalid parameter 'version'`);
+    }
+
     // Check if version exists.
-    if (!item.versions.includes(versionParam)) {
+    if (!versionList.map((version) => version.toString())
+             .includes(versionParam)) {
       throw new httpErrors.NotFound(`version '${
           versionParam}' not found for tooth '${ownerParam}/${repoParam}'`);
     }
@@ -58,10 +66,9 @@ router.get('/:owner/:repo/:version', async (req, res) => {
         toothRepoPath: item.toothRepoPath,
         toothRepoOwner: item.toothRepoOwner,
         toothRepoName: item.toothRepoName,
-        name: item.name,
-        description: item.description,
-        author: item.author,
-        tags: item.tags,
+        version: versionParam,
+        releaseTime:
+            item.versions.find((x) => x.version === versionParam).releaseTime,
         versions: item.versions,
       },
     });
