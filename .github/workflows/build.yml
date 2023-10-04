@@ -30,4 +30,4 @@ jobs:
           npm install clang-format@1.8.0
 
       - run: |
-          npx clang-format --dry-run --Werror $(find . -name '*.js')
+          npx clang-format --dry-run --Werror $(find . -name '*.js' -not -path './node_modules/*')
