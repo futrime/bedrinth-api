@@ -31,4 +31,6 @@ jobs:
 
       - run: |
           ls -la
+          pwd
+          find . -name '*.js'
           npx clang-format --dry-run --Werror $(find . -name '*.js')
