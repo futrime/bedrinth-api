@@ -58,9 +58,7 @@ try {
   }
 
   const toothModel = createToothModel(sequelize);
-  await Promise.all([
-    toothModel.sync(),
-  ])
+  await toothModel.sync();
 
   // Start API server.
   const app = express();

@@ -48,16 +48,19 @@ router.get('/', async (req, res) => {
       data: {
         pageIndex: page,
         totalPages: Math.ceil(count / ITEMS_PER_PAGE),
-        items: rows.map((item) => ({
-                          toothRepoPath: item.toothRepoPath,
-                          toothRepoOwner: item.toothRepoOwner,
-                          toothRepoName: item.toothRepoName,
-                          name: item.name,
-                          description: item.description,
-                          author: item.author,
-                          tags: item.tags,
-                          versions: item.versions,
-                        })),
+        items:
+            rows.map((item) => ({
+                       toothRepoPath: item.toothRepoPath,
+                       toothRepoOwner: item.toothRepoOwner,
+                       toothRepoName: item.toothRepoName,
+                       name: item.name,
+                       description: item.description,
+                       author: item.author,
+                       tags: item.tags,
+                       latestVersion: item.latestVersion,
+                       latestVersionReleaseTime: item.latestVersionReleaseTime,
+                       downloadCount: 0,  // TODO: implement download count.
+                     })),
       },
     });
 
