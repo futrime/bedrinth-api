@@ -15,5 +15,19 @@ jobs:
 
       - uses: docker/build-push-action@v4
         with:
-          no-cache: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/ppc64le,linux/s390x
+
+  check-style:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - run: |
+          npm install clang-format@1.8.0
+
+      - run: |
+          npx clang-format --dry-run --Werror $(find . -name '*.js')
