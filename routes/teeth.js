@@ -70,7 +70,7 @@ router.get('/:owner/:repo/:version', async (req, res) => {
         releaseTime:
             item.versions.find((x) => x.version === versionParam).releaseTime,
         versions: item.versions,
-        downloadCount: 0, // TODO: implement download count.
+        downloadCount: 0,  // TODO: implement download count.
       },
     });
   } catch (error) {
