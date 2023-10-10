@@ -35,7 +35,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/lippkg/lipindex:${{ env.VERSION }}
+            ghcr.io/lippkg/lip-index:${{ env.VERSION }}
 
       - name: Publish Docker image (release)
         uses: docker/build-push-action@v5
@@ -44,5 +44,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/lippkg/lipindex:${{ env.VERSION }}
-            ghcr.io/lippkg/lipindex:latest
+            ghcr.io/lippkg/lip-index:${{ env.VERSION }}
+            ghcr.io/lippkg/lip-index:latest
