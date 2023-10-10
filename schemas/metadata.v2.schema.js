@@ -28,6 +28,10 @@ export default {
           'type': 'object',
           'patternProperties': {'^.*$': {'type': 'string'}}
         },
+        'prerequisites': {
+          'type': 'object',
+          'patternProperties': {'^.*$': {'type': 'string'}}
+        },
         'files': {
           'type': 'object',
           'properties': {
@@ -64,6 +68,10 @@ export default {
                 }
               },
               'dependencies': {
+                'type': 'object',
+                'patternProperties': {'^.*$': {'type': 'string'}}
+              },
+              'prerequisites': {
                 'type': 'object',
                 'patternProperties': {'^.*$': {'type': 'string'}}
               },
