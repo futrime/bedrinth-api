@@ -4,7 +4,8 @@ on:
       - published
 
 env:
-  VERSION: 0.0.0
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   publish-docker-image:
@@ -12,37 +13,27 @@ jobs:
       packages: write
     runs-on: ubuntu-latest
     steps:
-      - name: Trim prefix v from version string
-        run: |
-          echo "VERSION=${{ github.ref_name }}" | sed 's/=v/=/' >> $GITHUB_ENV
-
-      - uses: actions/checkout@v4
-
       - uses: docker/setup-qemu-action@v3
 
       - uses: docker/setup-buildx-action@v3
 
       - uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish Docker image (prerelease)
-        uses: docker/build-push-action@v5
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
+
+      - uses: docker/build-push-action@v5
         if: ${{ github.event.release.prerelease }}
         with:
+          labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ghcr.io/lippkg/lip-index:${{ env.VERSION }}
-
-      - name: Publish Docker image (release)
-        uses: docker/build-push-action@v5
-        if: ${{ !github.event.release.prerelease }}
-        with:
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/lippkg/lip-index:${{ env.VERSION }}
-            ghcr.io/lippkg/lip-index:latest
+          tags: ${{ steps.meta.outputs.tags }}
