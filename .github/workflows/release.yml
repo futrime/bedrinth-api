@@ -31,7 +31,6 @@ jobs:
             type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
 
       - uses: docker/build-push-action@v5
-        if: ${{ github.event.release.prerelease }}
         with:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
