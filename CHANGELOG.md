@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2023-12-25
+
+### Changed
+
+- Only query repositories with `format_version` 2 for `tooth.json`.
+
 ## [0.3.0] - 2023-10-04
 
 ### Changed
@@ -38,7 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Basic functionality.
 
-[unreleased]: https://github.com/lippkg/lip-index/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/lippkg/lip-index/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/lippkg/lip-index/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/lippkg/lip-index/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/lippkg/lip-index/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/lippkg/lip-index/compare/v0.1.0...v0.1.1
