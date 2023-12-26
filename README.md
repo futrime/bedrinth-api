@@ -1,6 +1,6 @@
 # lip-index
 
-API server for querying published Lip teeth.
+API server for querying published lip teeth.
 
 ## Deployment
 
