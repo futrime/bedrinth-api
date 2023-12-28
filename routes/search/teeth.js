@@ -53,13 +53,13 @@ router.get('/', async (req, res) => {
                        toothRepoPath: item.toothRepoPath,
                        toothRepoOwner: item.toothRepoOwner,
                        toothRepoName: item.toothRepoName,
+                       latestVersion: item.latestVersion,
+                       latestVersionReleaseTime: item.latestVersionReleaseTime,
                        name: item.name,
                        description: item.description,
                        author: item.author,
                        tags: item.tags,
-                       latestVersion: item.latestVersion,
-                       latestVersionReleaseTime: item.latestVersionReleaseTime,
-                       downloadCount: 0,  // TODO: implement download count.
+                       hotness: 0,  // TODO: implement download count.
                      })),
       },
     });
