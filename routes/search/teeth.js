@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
         [sequelize.Op.and]: queryList.map(
             (term, index) => ({
               [sequelize.Op.like]: sequelize.literal(
-                  `CONCAT("toothRepoPath", ' ', name, ' ', author, ' ', description, ' ', array_to_string(tags, ' ')) ILIKE :searchTerm${
+                  `CONCAT("toothRepoPath", ' ', name, ' ', author, ' ', description, ' ', source, ' ',array_to_string(tags, ' ')) ILIKE :searchTerm${
                       index}`),
             })),
       },
@@ -58,6 +58,7 @@ router.get('/', async (req, res) => {
                        name: item.name,
                        description: item.description,
                        author: item.author,
+                       source: item.source,
                        tags: item.tags,
                        hotness: 0,  // TODO: implement download count.
                      })),

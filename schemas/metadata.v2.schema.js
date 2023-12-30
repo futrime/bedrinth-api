@@ -11,9 +11,14 @@ export default {
           'properties': {
             'name': {'type': 'string'},
             'description': {'type': 'string'},
-            'author': {'type': 'string'}
+            'author': {'type': 'string'},
+            'source': {'type': 'string'},
+            'tags': {
+              'type': 'array',
+              'items': {'type': 'string', 'pattern': '^[a-zA-Z0-9-]+$'}
+            }
           },
-          'required': ['name', 'description', 'author']
+          'required': ['name', 'description', 'author', 'tags']
         },
         'commands': {
           'type': 'object',
@@ -68,10 +73,6 @@ export default {
                 }
               },
               'dependencies': {
-                'type': 'object',
-                'patternProperties': {'^.*$': {'type': 'string'}}
-              },
-              'prerequisites': {
                 'type': 'object',
                 'patternProperties': {'^.*$': {'type': 'string'}}
               },
