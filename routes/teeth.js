@@ -73,6 +73,7 @@ router.get('/:owner/:repo/:version', async (req, res) => {
         name: item.name,
         description: item.description,
         author: item.author,
+        source: item.source,
         tags: item.tags,
         hotness: 0,  // TODO: implement download count.
       },

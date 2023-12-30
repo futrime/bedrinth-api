@@ -34,6 +34,10 @@ export default (sequelize) => sequelize.define('Tooth', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  source: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   tags: {
     type: DataTypes.ARRAY(DataTypes.STRING),
     allowNull: false,
