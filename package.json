@@ -1,0 +1,25 @@
+{
+  "name": "lip-index",
+  "version": "0.7.0",
+  "description": "An API backend for indexing lip packages",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lippkg/lip-index.git"
+  },
+  "author": "lippkg",
+  "license": "AGPL-3.0-only",
+  "bugs": {
+    "url": "https://github.com/lippkg/lip-index/issues"
+  },
+  "homepage": "https://github.com/lippkg/lip-index#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  }
+}
