@@ -8,12 +8,7 @@ import express from 'express';
 import morgan from 'morgan';
 import {Sequelize} from 'sequelize';
 
-import {createToothVersionModel} from './models/tooth_version';
-
-main().catch((error) => {
-  consola.error(error);
-  process.exit(1);
-});
+import {createToothVersionModel} from './models/tooth_version.js';
 
 interface RequestWithLocals extends express.Request {
   locals: {toothVersionModel: ReturnType<typeof createToothVersionModel>;}
@@ -100,13 +95,14 @@ async function waitForConnection(sequelize: Sequelize) {
 
     } catch (err) {
       assert(err instanceof Error);
-
-      consola.info(
-          `Database not ready (postgres://${process.env.POSTGRES_USER}@${
-              process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${
-              process.env.POSTGRES_DATABASE}): ${err.message}`);
+      consola.error(`Database is not ready: ${err.message}`);
       consola.info('Retrying in 5 seconds...');
       await delay(5000);
     }
   }
 }
+
+main().catch((error) => {
+  consola.error(error);
+  process.exit(1);
+});

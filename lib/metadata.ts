@@ -1,7 +1,7 @@
 import Ajv from 'ajv';
 
-import {RawMetadata} from './rawmetadata';
-import {JSON_SCHEMA} from './schema';
+import {RawMetadata} from './rawmetadata.js';
+import {JSON_SCHEMA} from './schema.js';
 
 export class Metadata {
   constructor(private raw: RawMetadata) {
@@ -42,7 +42,7 @@ export class Metadata {
 }
 
 function validateRawMetadata(raw: RawMetadata) {
-  const ajv = new Ajv();
+  const ajv = new Ajv.default();
   const validate = ajv.compile(JSON_SCHEMA)
   const valid = validate(raw);
 
