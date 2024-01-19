@@ -1,8 +1,30 @@
-import {DataTypes, Sequelize} from 'sequelize';
+import {DataTypes, InferAttributes, InferCreationAttributes, Model, Sequelize} from 'sequelize';
 
-export function createToothVersionModel(sequelize: Sequelize) {
-  return sequelize.define(
-      'ToothVersion',
+export class ToothVersionModel extends Model<
+    InferAttributes<ToothVersionModel>,
+    InferCreationAttributes<ToothVersionModel>> {
+  declare repoOwner: string;
+  declare repoName: string;
+  declare version: string;
+  declare isLatest: boolean;
+  declare releasedAt: Date;
+
+  declare name: string;
+  declare description: string;
+  declare author: string;
+  declare tags: string[];
+  declare avatarUrl: string|undefined;
+  declare source: string;
+
+  declare sourceRepoCreatedAt: Date;
+  declare sourceRepoStarCount: number;
+
+  declare updatedAt: Date;
+}
+
+export function createToothVersionModel(sequelize: Sequelize):
+    typeof ToothVersionModel {
+  return ToothVersionModel.init(
       {
         repoOwner: {
           type: DataTypes.STRING,
@@ -16,12 +38,12 @@ export function createToothVersionModel(sequelize: Sequelize) {
           type: DataTypes.STRING,
           allowNull: false,
         },
-        releasedAt: {
-          type: DataTypes.DATE,
-          allowNull: false,
-        },
         isLatest: {
           type: DataTypes.BOOLEAN,
+          allowNull: false,
+        },
+        releasedAt: {
+          type: DataTypes.DATE,
           allowNull: false,
         },
         name: {
@@ -47,6 +69,14 @@ export function createToothVersionModel(sequelize: Sequelize) {
           type: DataTypes.STRING,
           allowNull: false,
         },
+        sourceRepoCreatedAt: {
+          type: DataTypes.DATE,
+          allowNull: false,
+        },
+        sourceRepoStarCount: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
         updatedAt: {
           // For LRU cache.
           type: DataTypes.DATE,
@@ -54,6 +84,8 @@ export function createToothVersionModel(sequelize: Sequelize) {
         },
       },
       {
+        sequelize,
+        modelName: 'ToothVersion',
         indexes: [
           {
             unique: true,

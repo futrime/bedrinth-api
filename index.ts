@@ -5,15 +5,13 @@ import consola from 'consola'
 import cors from 'cors';
 import delay from 'delay';
 import express from 'express';
+import createHttpError from 'http-errors';
 import morgan from 'morgan';
 import {Sequelize} from 'sequelize';
 
 import {GitHubBot} from './lib/github_bot.js';
+import {createErrorResponse} from './lib/responses.js';
 import {createToothVersionModel} from './models/tooth_version.js';
-
-interface RequestWithLocals extends express.Request {
-  locals: {toothVersionModel: ReturnType<typeof createToothVersionModel>;}
-}
 
 const ENV_DEFAULTS = {
   GITHUB_BOT_EXPIRE: '600',
@@ -73,12 +71,27 @@ async function main() {
   app.use(cors());
   app.use(express.urlencoded({extended: false}));
   app.use((req, _, next) => {
-    (req as RequestWithLocals).locals = {
-      toothVersionModel: toothVersionModel,
-    };
+    req.app.locals.toothVersionModel = toothVersionModel;
 
     next();
   });
+
+  app.use(((err, _, res, next) => {
+            assert(err instanceof Error);
+
+            if (createHttpError.isHttpError(err)) {
+              res.status(err.statusCode)
+                  .send(createErrorResponse(err.statusCode, err.message));
+
+            } else {
+              consola.error(`unexpected error: ${err.message}}`);
+
+              res.status(500).send(
+                  createErrorResponse(500, 'Internal Server Error'));
+            }
+
+            next();
+          }) as express.ErrorRequestHandler);
 
   app.use((_, res) => {
     res.status(403).send({

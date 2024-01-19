@@ -55,7 +55,11 @@ async function fetchTeeth(
   for (const tooth of teeth) {
     try {
       await fetchTooth(
-          octokit, toothVersionModel, tooth.repoOwner, tooth.repoName);
+          octokit,
+          toothVersionModel,
+          tooth.repoOwner,
+          tooth.repoName,
+      );
 
     } catch (err) {
       assert(err instanceof Error);
@@ -74,21 +78,39 @@ async function fetchTooth(
   consola.log(`fetching tooth ${repoOwner}/${repoName}...`);
 
   const releases = await getReleases(octokit, repoOwner, repoName);
+
+  if (releases.length === 0) {
+    throw new Error(`no releases`);
+  }
+
   const latestVersion =
-      findLatestVersion(releases.map(release => makeVersion(release.tag)));
+      findLatestVersion(releases.map(release => release.version));
+  const firstVersion =
+      findFirstVersion(releases.map(release => release.version));
+  const firstVersionReleasedAt =
+      releases.find(release => semver.eq(release.version, firstVersion))
+          ?.releaseTime;
+
+  assert(firstVersionReleasedAt !== undefined);
 
   for (const release of releases) {
-    const version = makeVersion(release.tag);
-
     try {
       await fetchVersion(
-          toothVersionModel, repoOwner, repoName, release.tag,
-          release.releasTime, semver.eq(version, latestVersion));
+          octokit,
+          toothVersionModel,
+          repoOwner,
+          repoName,
+          release.version,
+          {
+            isLatest: semver.eq(release.version, latestVersion),
+            releasedAt: release.releaseTime,
+          },
+      );
 
     } catch (err) {
       assert(err instanceof Error);
       consola.error(`failed to fetch version ${repoOwner}/${repoName}@${
-          release.tag}: ${err.message}`);
+          release.version.version}: ${err.message}`);
     }
   }
 
@@ -96,34 +118,55 @@ async function fetchTooth(
 }
 
 async function fetchVersion(
+    octokit: Octokit,
     toothVersionModel: ReturnType<typeof createToothVersionModel>,
-    repoOwner: string, repoName: string, tag: string, releasedAt: Date,
-    isLatest: boolean) {
-  consola.log(`fetching version ${repoOwner}/${repoName}@${tag}...`);
+    repoOwner: string,
+    repoName: string,
+    version: SemVer,
+    info: {
+      isLatest: boolean,
+      releasedAt: Date,
+    },
+) {
+  consola.log(
+      `fetching version ${repoOwner}/${repoName}@${version.version}...`);
 
-  const metadata = await getMetadata(repoOwner, repoName, tag).catch(err => {
-    assert(err instanceof Error);
-    throw new Error(`failed to fetch metadata: ${err.message}`);
-  });
+  const metadata =
+      await getMetadata(repoOwner, repoName, version).catch(err => {
+        assert(err instanceof Error);
+        throw new Error(`failed to fetch metadata: ${err.message}`);
+      });
 
-  const version = makeVersion(tag);
+  const sourceRepoInfo = await getRepository(octokit, repoOwner, repoName);
 
   await toothVersionModel.upsert({
     repoOwner,
     repoName,
     version: version.version,
-    releasedAt,
-    isLatest,
+    isLatest: info.isLatest,
+    releasedAt: info.releasedAt,
     name: metadata.name,
     description: metadata.description,
     author: metadata.author,
     tags: metadata.tags,
     avatarUrl: metadata.avatarUrl,
     source: metadata.source,
+    sourceRepoCreatedAt: sourceRepoInfo.createdAt,
+    sourceRepoStarCount: sourceRepoInfo.starCount,
     updatedAt: new Date(),
   });
 
-  consola.log(`fetched version ${repoOwner}/${repoName}@${tag}`);
+  consola.log(`fetched version ${repoOwner}/${repoName}@${version.version}`);
+}
+
+function findFirstVersion(versions: SemVer[]): SemVer {
+  if (versions.length === 0) {
+    throw new Error('no versions');
+  }
+
+  const sortedVersions = semver.rsort(versions);
+
+  return sortedVersions[0];
 }
 
 function findLatestVersion(versions: SemVer[]): SemVer {
@@ -145,9 +188,9 @@ function findLatestVersion(versions: SemVer[]): SemVer {
 }
 
 async function getMetadata(
-    repoOwner: string, repoName: string, tag: string): Promise<Metadata> {
+    repoOwner: string, repoName: string, version: SemVer): Promise<Metadata> {
   const response = await fetch(`https://raw.githubusercontent.com/${
-      repoOwner}/${repoName}/${tag}/tooth.json`);
+      repoOwner}/${repoName}/v${version.version}/tooth.json`);
 
   if (response.status !== 200) {
     throw new Error(`failed to fetch tooth.json: ${response.statusText}`);
@@ -188,12 +231,12 @@ async function getTeeth(octokit: Octokit):
 
 async function getReleases(
     octokit: Octokit, repoOwner: string, repoName: string): Promise<Array<{
-  tag: string,
-  releasTime: Date,
+  version: SemVer,
+  releaseTime: Date,
 }>> {
   const releases: Array<{
-    tag: string,
-    releasTime: Date,
+    version: SemVer,
+    releaseTime: Date,
   }> = [];
   let isLastPage = false;
   let page = 1;
@@ -210,14 +253,38 @@ async function getReleases(
     }
 
     for (const item of response.data) {
-      releases.push(
-          {tag: item.tag_name, releasTime: new Date(item.created_at)});
+      try {
+        const version = makeVersion(item.tag_name);
+        releases.push(
+            {version: version, releaseTime: new Date(item.created_at)});
+
+      } catch (err) {
+        assert(err instanceof Error);
+        consola.error(`failed to parse version ${repoOwner}/${repoName}@${
+            item.tag_name}: ${err.message}`);
+      }
     }
 
     page++;
   }
 
   return releases;
+}
+
+async function getRepository(
+    octokit: Octokit, repoOwner: string, repoName: string): Promise<{
+  starCount: number,
+  createdAt: Date,
+}> {
+  const response = await octokit.rest.repos.get({
+    owner: repoOwner,
+    repo: repoName,
+  });
+
+  return {
+    starCount: response.data.stargazers_count,
+    createdAt: new Date(response.data.created_at),
+  };
 }
 
 function makeVersion(tag: string): SemVer {
