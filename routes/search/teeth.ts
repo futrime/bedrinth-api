@@ -21,6 +21,17 @@ interface ParamsType {
   order: OrderParamType;
 }
 
+const ORDER_MAP = {
+  ascending: 'ASC',
+  descending: 'DESC',
+};
+
+const SORT_MAP = {
+  starCount: 'sourceRepoStarCount',
+  createdAt: 'sourceRepoCreatedAt',
+  updatedAt: 'releasedAt',
+};
+
 router.get(
     '/',
     (async (req, res, next) => {
@@ -53,6 +64,9 @@ router.get(
               }
             ],
           },
+          order: [
+            [SORT_MAP[params.sort], ORDER_MAP[params.order]],
+          ],
           replacements: Object.fromEntries(params.queryList.map(
               (term, index) => [`searchTerm${index}`, `%${term}%`])),
           offset: (params.page - 1) * params.perPage,
