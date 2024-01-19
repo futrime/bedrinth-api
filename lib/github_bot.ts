@@ -80,7 +80,7 @@ async function fetchTooth(
   const releases = await getReleases(octokit, repoOwner, repoName);
 
   if (releases.length === 0) {
-    throw new Error(`no releases`);
+    return;
   }
 
   const latestVersion =
@@ -254,7 +254,7 @@ async function getReleases(
 
     for (const item of response.data) {
       try {
-        const version = makeVersion(item.tag_name);
+        const version = makeVersionFromTag(item.tag_name);
         releases.push(
             {version: version, releaseTime: new Date(item.created_at)});
 
@@ -287,7 +287,7 @@ async function getRepository(
   };
 }
 
-function makeVersion(tag: string): SemVer {
+export function makeVersionFromTag(tag: string): SemVer {
   // Tag must has a leading 'v'.
   if (!tag.startsWith('v')) {
     throw new Error(`invalid tag: ${tag}`);

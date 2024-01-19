@@ -12,6 +12,8 @@ import {Sequelize} from 'sequelize';
 import {GitHubBot} from './lib/github_bot.js';
 import {createErrorResponse} from './lib/responses.js';
 import {createToothVersionModel} from './models/tooth_version.js';
+import {router as routerSearchTeeth} from './routes/search/teeth.js';
+import {router as routerTeeth} from './routes/teeth.js';
 
 const ENV_DEFAULTS = {
   GITHUB_BOT_EXPIRE: '600',
@@ -76,7 +78,10 @@ async function main() {
     next();
   });
 
-  app.use(((err, _, res, next) => {
+  app.use('/search/teeth', routerSearchTeeth);
+  app.use('/teeth', routerTeeth);
+
+  app.use(((err, _, res, _next) => {
             assert(err instanceof Error);
 
             if (createHttpError.isHttpError(err)) {
@@ -84,19 +89,17 @@ async function main() {
                   .send(createErrorResponse(err.statusCode, err.message));
 
             } else {
-              consola.error(`unexpected error: ${err.message}}`);
+              consola.error(`unexpected error: ${err.message}`);
 
               res.status(500).send(
-                  createErrorResponse(500, 'Internal Server Error'));
+                  createErrorResponse(500, 'internal server error'));
             }
-
-            next();
           }) as express.ErrorRequestHandler);
 
   app.use((_, res) => {
     res.status(403).send({
       code: 403,
-      message: 'Forbidden',
+      message: 'forbidden',
     });
   });
 

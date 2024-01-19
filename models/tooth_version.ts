@@ -13,7 +13,7 @@ export class ToothVersionModel extends Model<
   declare description: string;
   declare author: string;
   declare tags: string[];
-  declare avatarUrl: string|undefined;
+  declare avatarUrl: string|null;
   declare source: string;
 
   declare sourceRepoCreatedAt: Date;

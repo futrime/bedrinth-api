@@ -1,7 +1,6 @@
 import assert from 'assert';
 import express from 'express';
 import createHttpError from 'http-errors';
-import isNaturalNumber from 'is-natural-number';
 import qs from 'qs';
 import sequelize from 'sequelize';
 
@@ -56,7 +55,7 @@ router.get(
               ...params.queryList.map(
                   (_, index) => ({
                     [sequelize.Op.like]: sequelize.literal(
-                        `CONCAT(repoOwner, ' ', repoName, ' ', name, ' ', description, ' ', author, ' ', array_to_string(tags, ' '), ' ', source) ILIKE :searchTerm${
+                        `CONCAT("repoOwner", ' ', "repoName", ' ', name, ' ', description, ' ', author, ' ', array_to_string(tags, ' '), ' ', source) ILIKE :searchTerm${
                             index}`),
                   })),
               {
@@ -86,15 +85,15 @@ router.get(
                   repoOwner: item.repoOwner,
                   repoName: item.repoName,
                   latestVersion: item.version,
-                  latestVersionReleasedAt: item.releasedAt,
+                  latestVersionReleasedAt: item.releasedAt.toISOString(),
                   name: item.name,
                   description: item.description,
                   author: item.author,
                   tags: item.tags,
                   avatarUrl: item.avatarUrl,
                   source: item.source,
-                  sourceRepoCreatedAt: item.sourceRepoCreatedAt,
-                  starCount: item.sourceRepoStarCount,
+                  sourceRepoCreatedAt: item.sourceRepoCreatedAt.toISOString(),
+                  sourceRepoStarCount: item.sourceRepoStarCount,
                 })),
           },
         });
@@ -104,6 +103,11 @@ router.get(
       }
     }) as express.RequestHandler,
 );
+
+function isNaturalNumber(input: string): boolean {
+  const naturalNumberRegex = /^[1-9]\d*$/;
+  return naturalNumberRegex.test(input);
+}
 
 function parseParams(query: qs.ParsedQs): ParamsType {
   assert(query.q === undefined || typeof query.q === 'string');
@@ -121,11 +125,11 @@ function parseParams(query: qs.ParsedQs): ParamsType {
   validateParams(qParam, perPageParam, pageParam, sortParam, orderParam);
 
   return {
-    queryList: (query.q ?? '').split(' ').filter((s) => s.length > 0),
-    perPage: Number(query.perPage),
-    page: Number(query.page),
-    sort: (query.sort ?? 'starCount') as SortParamType,
-    order: (query.order ?? 'descending') as OrderParamType,
+    queryList: qParam.split(' ').filter((s) => s.length > 0),
+    perPage: Number(perPageParam),
+    page: Number(pageParam),
+    sort: sortParam as SortParamType,
+    order: orderParam as OrderParamType,
   };
 }
 
@@ -145,17 +149,23 @@ function validateNonRepeatability(rows: {
 
 function validateParams(
     q: string, perPage: string, page: string, sort: string, order: string) {
-  if (!isNaturalNumber(perPage, {includeZero: true})) {
+  if (!isNaturalNumber(perPage)) {
     throw new Error(`parameter perPage must be a natural number: ${perPage}`);
   }
-  if (Number(perPage) > 100) {
+  if (page.length > 15 || Number(perPage) > 100) {
     throw new Error(
         `parameter perPage must be less than or equal to 100: ${perPage}`);
   }
 
   if (!isNaturalNumber(page)) {
+    throw new Error(`parameter page must be a natural number: ${page}`);
+  }
+  if (Number(page) < 1) {
     throw new Error(
-        `parameter page must be a positive natural number: ${page}`);
+        `parameter page must be greater than or equal to 1: ${page}`);
+  }
+  if (page.length > 15) {
+    throw new Error(`parameter page is too large: ${page}`);
   }
 
   if (!['starCount', 'createdAt', 'updatedAt'].includes(sort)) {
