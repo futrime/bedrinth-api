@@ -8,10 +8,11 @@ services:
       GITHUB_BOT_INTERVAL: 600
       GITHUB_BOT_TOKEN: <YOUR_GITHUB_TOKEN>
       NODE_ENV: production
+      POSTGRES_HOST: postgres
     links:
       - postgres
     ports:
-      - 127.0.0.1:11400:80
+      - 127.0.0.1:44388:80
     restart: always
   
   postgres:

@@ -1,8 +1,8 @@
 # lip-index
 
-API server for querying published lip teeth.
+An API backend for indexing lip packages
 
-## Deployment
+## Install
 
 Before you start, you need to install [Docker](https://docs.docker.com/install/) and [Docker Compose](https://docs.docker.com/compose/install/).
 
@@ -39,4 +39,16 @@ To stop the server, run the following command.
 docker-compose down
 ```
 
-Then you can access the server at port `11400` on your host machine. You are likely to need to configure a reverse proxy to access the server from the Internet.
+Then you can access the server at port `44388` on your host machine. You are likely to need to configure a reverse proxy to access the server from the Internet.
+
+## Usage
+
+## Contributing
+
+Open an issue to ask a question, report a bug, or request a feature.
+
+PRs accepted.
+
+## License
+
+AGPL-3.0-only © lippkg

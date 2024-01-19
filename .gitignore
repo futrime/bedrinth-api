@@ -1,4 +1,4 @@
-## github.com/github/gitignore/Node.gitignore
+## Node
 # Logs
 logs
 *.log
@@ -131,5 +131,5 @@ dist
 .pnp.*
 
 
-## Repo specific
-.vscode
+## Project specific
+/.vscode/
