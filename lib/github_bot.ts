@@ -52,7 +52,7 @@ async function fetchTeeth(
 
   const teeth = await getTeeth(octokit);
 
-  const promises: Array<Promise<void>> = teeth.map(async tooth => {
+  for (const tooth of teeth) {
     try {
       await fetchTooth(
           octokit, toothVersionModel, tooth.repoOwner, tooth.repoName);
@@ -62,9 +62,7 @@ async function fetchTeeth(
       consola.error(`failed to fetch tooth ${tooth.repoOwner}/${
           tooth.repoName}: ${err.message}`);
     }
-  });
-
-  await Promise.all(promises);
+  }
 
   consola.log('fetched teeth')
 }
@@ -79,7 +77,7 @@ async function fetchTooth(
   const latestVersion =
       findLatestVersion(releases.map(release => makeVersion(release.tag)));
 
-  const promises: Array<Promise<void>> = releases.map(async release => {
+  for (const release of releases) {
     const version = makeVersion(release.tag);
 
     try {
@@ -92,9 +90,7 @@ async function fetchTooth(
       consola.error(`failed to fetch version ${repoOwner}/${repoName}@${
           release.tag}: ${err.message}`);
     }
-  });
-
-  await Promise.all(promises);
+  }
 
   consola.log(`fetched tooth ${repoOwner}/${repoName}`);
 }
@@ -170,7 +166,7 @@ async function getTeeth(octokit: Octokit):
   let page = 1;
   while (isLastPage === false) {
     const response = await octokit.rest.search.code({
-      q: 'path:/+filename:tooth.json',
+      q: 'path:/+filename:tooth.json+"format_version"+2+"tooth"+"version"+"info"+"name"+"description"+"author"+"tags"',
       per_page: 100,
       page,
     });

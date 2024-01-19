@@ -1,5 +1,4 @@
 export const JSON_SCHEMA = {
-  '$schema': 'https://json-schema.org/draft-07/schema#',
   'type': 'object',
   'properties': {
     'format_version': {'type': 'integer', 'const': 2},
