@@ -8,6 +8,7 @@ import express from 'express';
 import morgan from 'morgan';
 import {Sequelize} from 'sequelize';
 
+import {GitHubBot} from './lib/github_bot.js';
 import {createToothVersionModel} from './models/tooth_version.js';
 
 interface RequestWithLocals extends express.Request {
@@ -51,14 +52,19 @@ async function main() {
   consola.level = logLevel;
 
   // Set up database.
-  const sequelize = new Sequelize(
-      postgresDatabase, postgresUser, postgresPassword,
-      {host: postgresHost, port: postgresPort, dialect: 'postgres'});
+  const sequelize =
+      new Sequelize(postgresDatabase, postgresUser, postgresPassword, {
+        host: postgresHost,
+        port: postgresPort,
+        dialect: 'postgres',
+        logging: false
+      });
 
   await waitForConnection(sequelize);
 
   const toothVersionModel = createToothVersionModel(sequelize);
-  await toothVersionModel.sync();
+
+  await sequelize.sync();
 
   // Set up web server.
   const app = express();
@@ -82,8 +88,13 @@ async function main() {
   });
 
   app.listen(listenPort, () => {
-    consola.info(`Listening on port ${listenPort}`);
+    consola.info(`listening on port ${listenPort}`);
   });
+
+  // Set up GitHub bot.
+  const gitHubBot = new GitHubBot(
+      toothVersionModel, githubBotExpire, githubBotInterval, githubBotToken);
+  await gitHubBot.start();
 }
 
 async function waitForConnection(sequelize: Sequelize) {
@@ -95,8 +106,8 @@ async function waitForConnection(sequelize: Sequelize) {
 
     } catch (err) {
       assert(err instanceof Error);
-      consola.error(`Database is not ready: ${err.message}`);
-      consola.info('Retrying in 5 seconds...');
+      consola.error(`database is not ready: ${err.message}`);
+      consola.log('retrying in 5 seconds...');
       await delay(5000);
     }
   }

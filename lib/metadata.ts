@@ -4,7 +4,7 @@ import {RawMetadata} from './rawmetadata.js';
 import {JSON_SCHEMA} from './schema.js';
 
 export class Metadata {
-  constructor(private raw: RawMetadata) {
+  constructor(private readonly raw: RawMetadata) {
     validateRawMetadata(raw);
   }
 
