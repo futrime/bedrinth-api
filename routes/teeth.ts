@@ -58,9 +58,8 @@ router.get(
             author: item.author,
             tags: item.tags,
             avatarUrl: item.avatarUrl,
-            source: item.source,
-            sourceRepoCreatedAt: item.sourceRepoCreatedAt.toISOString(),
-            sourceRepoStarCount: item.sourceRepoStarCount,
+            repoCreatedAt: item.repoCreatedAt.toISOString(),
+            starCount: item.starCount,
             versions:
                 versions.map((version) => ({
                                version: version.version.version,

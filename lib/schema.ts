@@ -14,8 +14,7 @@ export const JSON_SCHEMA = {
           'type': 'array',
           'items': {'type': 'string', 'pattern': '^[a-zA-Z0-9-]+$'}
         },
-        'avatar_url': {'type': 'string'},
-        'source': {'type': 'string'}
+        'avatar_url': {'type': 'string'}
       },
       'required': ['name', 'description', 'author', 'tags']
     },

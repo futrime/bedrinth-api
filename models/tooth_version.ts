@@ -14,10 +14,9 @@ export class ToothVersionModel extends Model<
   declare author: string;
   declare tags: string[];
   declare avatarUrl: string|null;
-  declare source: string;
 
-  declare sourceRepoCreatedAt: Date;
-  declare sourceRepoStarCount: number;
+  declare repoCreatedAt: Date;
+  declare starCount: number;
 
   declare updatedAt: Date;
 }
@@ -65,15 +64,11 @@ export function createToothVersionModel(sequelize: Sequelize):
         avatarUrl: {
           type: DataTypes.STRING,
         },
-        source: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-        sourceRepoCreatedAt: {
+        repoCreatedAt: {
           type: DataTypes.DATE,
           allowNull: false,
         },
-        sourceRepoStarCount: {
+        starCount: {
           type: DataTypes.INTEGER,
           allowNull: false,
         },

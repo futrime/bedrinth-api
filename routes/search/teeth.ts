@@ -26,8 +26,8 @@ const ORDER_MAP = {
 };
 
 const SORT_MAP = {
-  starCount: 'sourceRepoStarCount',
-  createdAt: 'sourceRepoCreatedAt',
+  starCount: 'starCount',
+  createdAt: 'repoCreatedAt',
   updatedAt: 'releasedAt',
 };
 
@@ -55,7 +55,7 @@ router.get(
               ...params.queryList.map(
                   (_, index) => ({
                     [sequelize.Op.like]: sequelize.literal(
-                        `CONCAT("repoOwner", ' ', "repoName", ' ', name, ' ', description, ' ', author, ' ', array_to_string(tags, ' '), ' ', source) ILIKE :searchTerm${
+                        `CONCAT("repoOwner", ' ', "repoName", ' ', name, ' ', description, ' ', author, ' ', array_to_string(tags, ' ')) ILIKE :searchTerm${
                             index}`),
                   })),
               {
@@ -91,9 +91,8 @@ router.get(
                   author: item.author,
                   tags: item.tags,
                   avatarUrl: item.avatarUrl,
-                  source: item.source,
-                  sourceRepoCreatedAt: item.sourceRepoCreatedAt.toISOString(),
-                  sourceRepoStarCount: item.sourceRepoStarCount,
+                  repoCreatedAt: item.repoCreatedAt.toISOString(),
+                  starCount: item.starCount,
                 })),
           },
         });
