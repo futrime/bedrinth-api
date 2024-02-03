@@ -5,6 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  NAMESPACE: ${{ github.repository_owner }}
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -23,17 +24,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/metadata-action@v5
-        id: meta
+      - id: get-version
+        uses: frabert/replace-string-action@v2
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          pattern: '^v'
+          string: ${{ github.event.release.tag_name }}
+          replace-with: ''
 
       - uses: docker/build-push-action@v5
         with:
-          labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ steps.get-version.outputs.replaced }}
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.IMAGE_NAME }}:latest
 
   update-release-notes:
     permissions:
