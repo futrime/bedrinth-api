@@ -137,7 +137,7 @@ async function fetchVersion(
         throw new Error(`failed to fetch metadata: ${err.message}`);
       });
 
-  const sourceRepoInfo = await getRepository(octokit, repoOwner, repoName);
+  const repoInfo = await getRepository(octokit, repoOwner, repoName);
 
   await toothVersionModel.upsert({
     repoOwner,
@@ -150,9 +150,8 @@ async function fetchVersion(
     author: metadata.author,
     tags: metadata.tags,
     avatarUrl: metadata.avatarUrl,
-    source: metadata.source,
-    sourceRepoCreatedAt: sourceRepoInfo.createdAt,
-    sourceRepoStarCount: sourceRepoInfo.starCount,
+    repoCreatedAt: repoInfo.createdAt,
+    starCount: repoInfo.starCount,
     updatedAt: new Date(),
   });
 

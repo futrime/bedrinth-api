@@ -35,10 +35,6 @@ export class Metadata {
   get avatarUrl(): string|undefined {
     return this.raw.info.avatar_url;
   }
-
-  get source(): string {
-    return this.raw.info.source ?? this.raw.tooth;
-  }
 }
 
 function validateRawMetadata(raw: RawMetadata) {
