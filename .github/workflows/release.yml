@@ -5,8 +5,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  NAMESPACE: ${{ github.repository_owner }}
-  IMAGE_NAME: ${{ github.repository }}
+  NAMESPACE: lippkg
+  IMAGE_NAME: lip-index
 
 jobs:
   publish-docker-image:
