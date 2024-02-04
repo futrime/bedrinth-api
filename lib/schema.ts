@@ -12,7 +12,7 @@ export const JSON_SCHEMA = {
         'author': {'type': 'string'},
         'tags': {
           'type': 'array',
-          'items': {'type': 'string', 'pattern': '^[a-zA-Z0-9-]+$'}
+          'items': {'type': 'string', 'pattern': '^[a-z0-9-]+$'}
         },
         'avatar_url': {'type': 'string'}
       },
