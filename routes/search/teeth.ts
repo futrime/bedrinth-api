@@ -5,6 +5,7 @@ import qs from 'qs';
 import sequelize from 'sequelize';
 
 import {createToothVersionModel} from '../../models/tooth_version.js';
+import consola from 'consola';
 
 export const router = express.Router();
 
@@ -72,7 +73,14 @@ router.get(
           limit: params.perPage,
         });
 
-        validateNonRepeatability(rows);
+        try {
+          validateNonRepeatability(rows);
+
+        } catch (error) {
+          assert(error instanceof Error);
+
+          consola.error(`failed to validate non-repeatability: ${error.message}`);
+        }
 
         res.send({
           apiVersion: '1',
