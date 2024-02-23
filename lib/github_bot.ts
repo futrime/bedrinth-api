@@ -208,7 +208,7 @@ async function getTeeth(octokit: Octokit):
   let page = 1;
   while (isLastPage === false) {
     const response = await octokit.rest.search.code({
-      q: 'path:/+filename:tooth.json+"format_version"+2+"tooth"+"version"+"info"+"name"+"description"+"author"+"tags"',
+      q: 'path:tooth.json+"format_version"+2+"tooth"+"version"+"info"+"name"+"description"+"author"+"tags"',
       per_page: 100,
       page,
     });
