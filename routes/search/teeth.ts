@@ -4,14 +4,14 @@ import createHttpError from 'http-errors';
 import qs from 'qs';
 import sequelize from 'sequelize';
 
-import {createToothVersionModel} from '../../models/tooth_version.js';
+import { createToothVersionModel } from '../../models/tooth_version.js';
 import consola from 'consola';
 
 export const router = express.Router();
 
-type SortParamType = 'starCount'|'createdAt'|'updatedAt';
+type SortParamType = 'starCount' | 'createdAt' | 'updatedAt';
 
-type OrderParamType = 'ascending'|'descending';
+type OrderParamType = 'ascending' | 'descending';
 
 interface ParamsType {
   queryList: string[];
@@ -33,82 +33,105 @@ const SORT_MAP = {
 };
 
 router.get(
-    '/',
-    (async (req, res, next) => {
+  '/',
+  (async (req, res, next) => {
+    try {
+      let params;
       try {
-        let params;
-        try {
-          params = parseParams(req.query);
+        params = parseParams(req.query);
 
-        } catch (err) {
-          assert(err instanceof Error);
+      } catch (err) {
+        assert(err instanceof Error);
 
-          throw new createHttpError.BadRequest(err.message);
-        }
+        throw new createHttpError.BadRequest(err.message);
+      }
 
-        const toothVersionModel = req.app.locals.toothVersionModel as
-            ReturnType<typeof createToothVersionModel>;
+      const toothVersionModel = req.app.locals.toothVersionModel as
+        ReturnType<typeof createToothVersionModel>;
 
-        // Query database.
-        const {count, rows} = await toothVersionModel.findAndCountAll({
-          where: {
-            [sequelize.Op.and]: [
-              ...params.queryList.map(
-                  (_, index) => ({
-                    [sequelize.Op.like]: sequelize.literal(
-                        `CONCAT("repoOwner", ' ', "repoName", ' ', name, ' ', description, ' ', author, ' ', array_to_string(tags, ' ')) ILIKE :searchTerm${
-                            index}`),
-                  })),
-              {
-                isLatest: true,
-              }
-            ],
-          },
-          order: [
-            [SORT_MAP[params.sort], ORDER_MAP[params.order]],
+      const normalQueries = params.queryList.filter(
+        (query) => !query.includes(':'));
+      const tagQueries = params.queryList.filter(
+        (query) => query.startsWith('tag:')).map((query) => query.slice(4));
+
+      // Query database.
+      const { count, rows } = await toothVersionModel.findAndCountAll({
+        where: {
+          [sequelize.Op.and]: [
+            ...normalQueries.map(
+              query => ({
+                [sequelize.Op.or]: {
+                  repoOwner: {
+                    [sequelize.Op.iLike]: `%${query}%`,
+                  },
+                  repoName: {
+                    [sequelize.Op.iLike]: `%${query}%`,
+                  },
+                  name: {
+                    [sequelize.Op.iLike]: `%${query}%`,
+                  },
+                  description: {
+                    [sequelize.Op.iLike]: `%${query}%`,
+                  },
+                  author: {
+                    [sequelize.Op.iLike]: `%${query}%`,
+                  },
+                },
+              })),
+            ...tagQueries.map(
+              query => ({
+                tags: {
+                  [sequelize.Op.contains]: [query],
+                },
+              })),
+            {
+              isLatest: true,
+            },
           ],
-          replacements: Object.fromEntries(params.queryList.map(
-              (term, index) => [`searchTerm${index}`, `%${term}%`])),
-          offset: (params.page - 1) * params.perPage,
-          limit: params.perPage,
-        });
+        },
+        order: [
+          [SORT_MAP[params.sort], ORDER_MAP[params.order]],
+        ],
+        offset: (params.page - 1) * params.perPage,
+        limit: params.perPage,
+      });
 
-        try {
-          validateNonRepeatability(rows);
-
-        } catch (error) {
-          assert(error instanceof Error);
-
-          consola.error(`failed to validate non-repeatability: ${error.message}`);
-        }
-
-        res.send({
-          apiVersion: '1',
-          data: {
-            pageIndex: params.page,
-            totalPages: Math.ceil(count / params.perPage),
-            items: rows.map(
-                (item) => ({
-                  repoPath: `github.com/${item.repoOwner}/${item.repoName}`,
-                  repoOwner: item.repoOwner,
-                  repoName: item.repoName,
-                  latestVersion: item.version,
-                  latestVersionReleasedAt: item.releasedAt.toISOString(),
-                  name: item.name,
-                  description: item.description,
-                  author: item.author,
-                  tags: item.tags,
-                  avatarUrl: item.avatarUrl,
-                  repoCreatedAt: item.repoCreatedAt.toISOString(),
-                  starCount: item.starCount,
-                })),
-          },
-        });
+      try {
+        validateNonRepeatability(rows);
 
       } catch (error) {
-        next(error);
+        assert(error instanceof Error);
+
+        consola.error(`failed to validate non-repeatability: ${error.message}`);
       }
-    }) as express.RequestHandler,
+
+      res.send({
+        apiVersion: '1',
+        data: {
+          pageIndex: params.page,
+          totalPages: Math.ceil(count / params.perPage),
+          items: rows.map(
+            (item) => ({
+              repoPath: `github.com/${item.repoOwner}/${item.repoName}`,
+              repoOwner: item.repoOwner,
+              repoName: item.repoName,
+              latestVersion: item.version,
+              latestVersionReleasedAt: item.releasedAt.toISOString(),
+              name: item.name,
+              description: item.description,
+              author: item.author,
+              tags: item.tags,
+              avatarUrl: item.avatarUrl,
+              repoCreatedAt: item.repoCreatedAt.toISOString(),
+              starCount: item.starCount,
+            })),
+        },
+      });
+
+    } catch (error) {
+      next(error);
+    }
+  }) as express.RequestHandler,
 );
 
 function isNaturalNumber(input: string): boolean {
@@ -155,13 +178,13 @@ function validateNonRepeatability(rows: {
 }
 
 function validateParams(
-    q: string, perPage: string, page: string, sort: string, order: string) {
+  q: string, perPage: string, page: string, sort: string, order: string) {
   if (!isNaturalNumber(perPage)) {
     throw new Error(`parameter perPage must be a natural number: ${perPage}`);
   }
   if (page.length > 15 || Number(perPage) > 100) {
     throw new Error(
-        `parameter perPage must be less than or equal to 100: ${perPage}`);
+      `parameter perPage must be less than or equal to 100: ${perPage}`);
   }
 
   if (!isNaturalNumber(page)) {
@@ -169,7 +192,7 @@ function validateParams(
   }
   if (Number(page) < 1) {
     throw new Error(
-        `parameter page must be greater than or equal to 1: ${page}`);
+      `parameter page must be greater than or equal to 1: ${page}`);
   }
   if (page.length > 15) {
     throw new Error(`parameter page is too large: ${page}`);
@@ -177,12 +200,11 @@ function validateParams(
 
   if (!['starCount', 'createdAt', 'updatedAt'].includes(sort)) {
     throw new Error(
-        `parameter sort must be one of starCount, createdAt, updatedAt: ${
-            sort}`);
+      `parameter sort must be one of starCount, createdAt, updatedAt: ${sort}`);
   }
 
   if (!['ascending', 'descending'].includes(order)) {
     throw new Error(
-        `parameter order must be one of ascending, descending: ${order}`);
+      `parameter order must be one of ascending, descending: ${order}`);
   }
 }

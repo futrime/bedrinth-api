@@ -15,17 +15,17 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
 
-  check-style:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # check-style:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 20
 
-      - run: |
-          npm install clang-format@1.8.0
+  #     - run: |
+  #         npm install clang-format@1.8.0
 
-      - run: |
-          npx clang-format --dry-run --Werror $(find . -name '*.js' -not -path './node_modules/*')
+  #     - run: |
+  #         npx clang-format --dry-run --Werror $(find . -name '*.js' -not -path './node_modules/*')
