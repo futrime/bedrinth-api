@@ -5,7 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  NAMESPACE: lippkg
+  NAMESPACE: futrime
   IMAGE_NAME: lip-index
 
 jobs:

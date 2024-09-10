@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/lippkg/lip-index:latest
+    image: ghcr.io/futrime/lip-index:latest
     depends_on:
       - postgres
     environment:

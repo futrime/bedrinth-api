@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lippkg/lip-index.git"
+    "url": "git+https://github.com/futrime/lip-index.git"
   },
-  "author": "lippkg",
+  "author": "futrime",
   "license": "AGPL-3.0-only",
   "bugs": {
-    "url": "https://github.com/lippkg/lip-index/issues"
+    "url": "https://github.com/futrime/lip-index/issues"
   },
-  "homepage": "https://github.com/lippkg/lip-index#readme",
+  "homepage": "https://github.com/futrime/lip-index#readme",
   "devDependencies": {
     "@tsconfig/node20": "^20.1.2",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
