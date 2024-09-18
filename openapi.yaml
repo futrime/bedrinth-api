@@ -1,0 +1,247 @@
+openapi: 3.0.0
+info:
+  title: lip-index API
+  version: 1.0.0
+paths:
+  /search/teeth:
+    get:
+      summary: Search teeth
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: perPage
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apiVersion:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      pageIndex:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            repoPath:
+                              type: string
+                            repoOwner:
+                              type: string
+                            repoName:
+                              type: string
+                            latestVersion:
+                              type: string
+                            latestVersionReleasedAt:
+                              type: string
+                            name:
+                              type: string
+                            description:
+                              type: string
+                            author:
+                              type: string
+                            tags:
+                              type: array
+                              items:
+                                type: string
+                            avatarUrl:
+                              type: string
+                              nullable: true
+                            source:
+                              type: string
+                            sourceRepoCreatedAt:
+                              type: string
+                            sourceRepoStarCount:
+                              type: integer
+                          required:
+                            - repoPath
+                            - repoOwner
+                            - repoName
+                            - name
+                            - description
+                            - author
+                            - tags
+                            - latestVersion
+                            - latestVersionReleasedAt
+                            - source
+                            - sourceRepoCreatedAt
+                            - sourceRepoStarCount
+                            - avatarUrl
+                    required:
+                      - items
+                      - pageIndex
+                      - totalPages
+                required:
+                  - apiVersion
+                  - data
+        "400":
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal Server Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /teeth/{repoOwner}/{repoName}/{version}:
+    get:
+      summary: Get a tooth
+      parameters:
+        - name: repoOwner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: repoName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apiVersion:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      repoPath:
+                        type: string
+                      repoOwner:
+                        type: string
+                      repoName:
+                        type: string
+                      version:
+                        type: string
+                      releasedAt:
+                        type: string
+                      name:
+                        type: string
+                      description:
+                        type: string
+                      author:
+                        type: string
+                      tags:
+                        type: array
+                        items:
+                          type: string
+                      avatarUrl:
+                        type: string
+                        nullable: true
+                      source:
+                        type: string
+                      sourceRepoCreatedAt:
+                        type: string
+                      sourceRepoStarCount:
+                        type: integer
+                      versions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            version:
+                              type: string
+                            releasedAt:
+                              type: string
+                          required:
+                            - version
+                            - releasedAt
+                    required:
+                      - versions
+                      - repoPath
+                      - repoOwner
+                      - repoName
+                      - version
+                      - releasedAt
+                      - name
+                      - description
+                      - author
+                      - tags
+                      - source
+                      - sourceRepoCreatedAt
+                      - sourceRepoStarCount
+                      - avatarUrl
+                required:
+                  - apiVersion
+                  - data
+        "400":
+          description: "Bad Request"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        500:
+          description: "Internal Server Error"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        apiVersion:
+          type: string
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+            message:
+              type: string
+          required:
+            - code
+            - message
+      required:
+        - error
+        - apiVersion
