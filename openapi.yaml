@@ -2,10 +2,12 @@ openapi: 3.0.0
 info:
   title: lippkg API
   version: 2.0.0
+security: []
 paths:
   /packages:
     get:
       summary: Search packages
+      security: []
       parameters:
         - name: q
           in: query
@@ -29,6 +31,7 @@ paths:
           in: query
           required: false
           schema:
+            type: string
             enum:
               - hotness
               - updated
@@ -36,6 +39,7 @@ paths:
           in: query
           required: false
           schema:
+            type: string
             enum:
               - asc
               - desc
@@ -62,6 +66,7 @@ paths:
                           type: object
                           properties:
                             source:
+                              type: string
                               enum:
                                 - github
                                 - pypi
@@ -116,11 +121,13 @@ paths:
   /packages/{source}/{identifier}:
     get:
       summary: Get a package
+      security: []
       parameters:
         - name: source
           in: path
           required: true
           schema:
+            type: string
             enum:
               - github
               - pypi
@@ -143,6 +150,7 @@ paths:
                     type: object
                     properties:
                       source:
+                        type: string
                         enum:
                           - github
                           - pypi
