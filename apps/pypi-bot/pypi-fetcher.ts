@@ -43,7 +43,7 @@ export class PypiFetcher implements PackageFetcher {
       name: project,
       description: data.info.summary,
       author: data.info.author ?? data.info.author_email ?? 'Unknown',
-      tags: (data.info.keywords ?? '').split(','),
+      tags: (data.info.keywords ?? '').split(',').map(tag => tag.trim()),
       avatarUrl: '',
       hotness: data.info.downloads.last_month,
       updated: data.releases[data.info.version][0].upload_time_iso_8601,
