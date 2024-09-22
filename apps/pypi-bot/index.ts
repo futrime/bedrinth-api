@@ -8,7 +8,7 @@ interface Config {
   logLevel: number
 }
 
-async function main(): Promise<void> {
+async function main (): Promise<void> {
   const config: Config = {
     databaseUrl: process.env.DATABASE_URL ?? 'redis://localhost:6379',
     logLevel: Number(process.env.LOG_LEVEL ?? 3)

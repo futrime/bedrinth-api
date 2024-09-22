@@ -9,7 +9,7 @@ interface Config {
   logLevel: number
 }
 
-async function main(): Promise<void> {
+async function main (): Promise<void> {
   const config: Config = {
     databaseUrl: process.env.DATABASE_URL ?? 'redis://localhost:6379',
     githubToken: process.env.GITHUB_TOKEN ?? '',

@@ -7,7 +7,7 @@ export class PypiFetcher implements PackageFetcher {
    * Fetches packages from GitHub
    * @returns an async generator that yields Package objects
    */
-  public async * fetch(): AsyncGenerator<Package> {
+  public async * fetch (): AsyncGenerator<Package> {
     consola.debug('Fetching packages')
 
     for await (const project of this.searchProjects()) {
@@ -21,7 +21,7 @@ export class PypiFetcher implements PackageFetcher {
     }
   }
 
-  private async fetchPackage(project: string): Promise<Package> {
+  private async fetchPackage (project: string): Promise<Package> {
     consola.debug(`Fetching ${project}`)
 
     const url = `https://pypi.org/pypi/${project}/json`
@@ -54,7 +54,7 @@ export class PypiFetcher implements PackageFetcher {
     }
   }
 
-  private async * searchProjects(): AsyncGenerator<string> {
+  private async * searchProjects (): AsyncGenerator<string> {
     let page = 1
 
     const regex = /<span class="package-snippet__name">(endstone-.+?|endstone)<\/span>/g
