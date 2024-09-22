@@ -7,7 +7,6 @@ export interface Package {
   avatarUrl: string
   hotness: number
   updated: string
-  readme: string
   versions: Release[]
 }
 

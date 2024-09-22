@@ -14,7 +14,6 @@ const schema = new Schema('package', {
   avatarUrl: { type: 'string' },
   hotness: { type: 'number' },
   updated: { type: 'string' },
-  readme: { type: 'text' },
   release_versions: { type: 'string[]', path: '$.versions[*].version' },
   release_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' }
 })
@@ -40,7 +39,7 @@ export class RedisClient implements DatabaseClient {
     await this.client.quit()
   }
 
-  async savePackage (pkg: Package, expiry: Date): Promise<void> {
+  async save (pkg: Package, expiration: number): Promise<void> {
     const entityId = `github:${pkg.identifier}`
     const entityData = {
       source: 'github',
@@ -48,9 +47,6 @@ export class RedisClient implements DatabaseClient {
     }
 
     await this.repository.save(entityId, entityData)
-
-    // Set expiration
-    const expiryInSeconds = Math.floor((expiry.getTime() - Date.now()) / 1000)
-    await this.client.expire(entityId, expiryInSeconds)
+    await this.repository.expire(entityId, expiration)
   }
 }

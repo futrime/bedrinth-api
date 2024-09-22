@@ -50,7 +50,6 @@ export class GitHubFetcher implements PackageFetcher {
 
     const toothMetadata = await this.fetchToothMetadata(repository.owner, repository.repo)
     const latestReleaseTime = await this.fetchLatestReleaseTime(repository.owner, repository.repo)
-    const readme = await this.fetchReadme(repository.owner, repository.repo)
 
     const identifier = `${repository.owner}/${repository.repo}`
     return {
@@ -62,25 +61,7 @@ export class GitHubFetcher implements PackageFetcher {
       avatarUrl: '',
       hotness: repository.stars,
       updated: latestReleaseTime.toISOString(),
-      readme,
       versions: []
-    }
-  }
-
-  /**
-   * Gets the README.md for a repository. If failed, it will return an empty string.
-   * @returns the README.md
-   */
-  private async fetchReadme (owner: string, repo: string): Promise<string> {
-    try {
-      const url = `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/README.md`
-      const response = await fetch(url)
-
-      const data = await response.text()
-      return data
-    } catch (error) {
-      consola.error(`Error fetching README.md for ${owner}/${repo}:`, error)
-      return ''
     }
   }
 
