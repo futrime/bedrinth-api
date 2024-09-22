@@ -9,7 +9,7 @@ export class GitHubFetcher implements PackageFetcher {
   /**
    * @param authToken The authentication token for the GitHub API
    */
-  constructor (authToken: string) {
+  constructor(authToken: string) {
     this.octokit = new Octokit({ auth: authToken })
   }
 
@@ -17,7 +17,7 @@ export class GitHubFetcher implements PackageFetcher {
    * Fetches packages from GitHub
    * @returns an async generator that yields Package objects
    */
-  public async * fetch (): AsyncGenerator<Package> {
+  public async * fetch(): AsyncGenerator<Package> {
     consola.debug('Fetching packages')
 
     for await (const repository of this.searchRepositories()) {
@@ -35,7 +35,7 @@ export class GitHubFetcher implements PackageFetcher {
    * Gets the latest release time for a repository
    * @returns the latest release time
    */
-  private async fetchLatestReleaseTime (owner: string, repo: string): Promise<Date> {
+  private async fetchLatestReleaseTime(owner: string, repo: string): Promise<Date> {
     const escapedOwner = escapeForGoProxy(owner)
     const escapedRepo = escapeForGoProxy(repo)
     const url = `https://goproxy.io/github.com/${escapedOwner}/${escapedRepo}/@latest`
@@ -45,7 +45,7 @@ export class GitHubFetcher implements PackageFetcher {
     return new Date(data.Time)
   }
 
-  private async fetchPackage (repository: Repository): Promise<Package> {
+  private async fetchPackage(repository: Repository): Promise<Package> {
     consola.debug(`Fetching ${repository.owner}/${repository.repo}`)
 
     const toothMetadata = await this.fetchToothMetadata(repository.owner, repository.repo)
@@ -65,7 +65,7 @@ export class GitHubFetcher implements PackageFetcher {
     }
   }
 
-  private async fetchToothMetadata (owner: string, repo: string): Promise<ToothMetadata> {
+  private async fetchToothMetadata(owner: string, repo: string): Promise<ToothMetadata> {
     const url = `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/tooth.json`
     const response = await fetch(url)
     const data = await response.json()
@@ -77,13 +77,13 @@ export class GitHubFetcher implements PackageFetcher {
    *
    * @returns an async generator that yields objects with owner and repo properties
    */
-  private async * searchRepositories (): AsyncGenerator<Repository, void, unknown> {
+  private async * searchRepositories(): AsyncGenerator<Repository, void, unknown> {
     const query = 'path:/+filename:tooth.json+"format_version"+2+"tooth"+"version"+"info"+"name"+"description"+"author"+"tags"'
     let page = 1
     let hasMore = true
 
     while (hasMore) {
-      consola.debug(`Searching for repositories on page ${page}`)
+      consola.debug(`Searching page ${page}`)
 
       const { data } = await this.octokit.rest.search.code({
         q: query,
@@ -120,6 +120,6 @@ interface ToothMetadata {
   }
 }
 
-function escapeForGoProxy (s: string): string {
+function escapeForGoProxy(s: string): string {
   return s.replace(/([A-Z])/g, (match) => `!${match.toLowerCase()}`)
 }

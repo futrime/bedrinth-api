@@ -1,24 +1,22 @@
 import 'dotenv/config'
 import consola from 'consola'
-import { GitHubFetcher } from './github-fetcher.js'
+import { PypiFetcher } from './pypi-fetcher.js'
 import { RedisClient } from './redis-client.js'
 
 interface Config {
   databaseUrl: string
-  githubToken: string
   logLevel: number
 }
 
 async function main(): Promise<void> {
   const config: Config = {
     databaseUrl: process.env.DATABASE_URL ?? 'redis://localhost:6379',
-    githubToken: process.env.GITHUB_TOKEN ?? '',
     logLevel: Number(process.env.LOG_LEVEL ?? 3)
   }
 
   consola.level = config.logLevel
 
-  const fetcher = new GitHubFetcher(config.githubToken)
+  const fetcher = new PypiFetcher()
   const redisClient = new RedisClient(config.databaseUrl)
   await redisClient.connect()
 
