@@ -1,8 +1,9 @@
 import { Octokit } from 'octokit'
 import { Package } from './package.js'
 import consola from 'consola'
+import { PackageFetcher } from './package-fetcher.js'
 
-export class GitHubFetcher {
+export class GitHubFetcher implements PackageFetcher {
   private readonly octokit: Octokit
 
   /**
@@ -16,8 +17,8 @@ export class GitHubFetcher {
    * Fetches packages from GitHub
    * @returns an async generator that yields Package objects
    */
-  public async * fetch (): AsyncGenerator<Package, void, unknown> {
-    consola.debug('Fetching packages from GitHub')
+  public async * fetch (): AsyncGenerator<Package> {
+    consola.debug('Fetching packages')
 
     for await (const repository of this.searchRepositories()) {
       try {
@@ -28,8 +29,6 @@ export class GitHubFetcher {
         consola.error(`Error fetching ${repository.owner}/${repository.repo}:`, error)
       }
     }
-
-    consola.debug('Fetched packages from GitHub')
   }
 
   /**
