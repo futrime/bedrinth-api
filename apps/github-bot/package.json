@@ -1,6 +1,6 @@
 {
   "name": "lippkg-github-bot",
-  "version": "0.10.0",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "build": "tsc",
