@@ -56,7 +56,21 @@ router.get('/', (async (req, res, next) => {
 
     res.json({
       apiVersion: '2.0.0',
-      data: packages
+      data: {
+        pageIndex: params.page,
+        totalPages: packages.pageCount,
+        items: packages.packages.map((pkg) => ({
+          source: pkg.source,
+          identifier: pkg.identifier,
+          name: pkg.name,
+          description: pkg.description,
+          author: pkg.author,
+          tags: pkg.tags,
+          avatarUrl: pkg.avatarUrl,
+          hotness: pkg.hotness,
+          updated: pkg.updated
+        }))
+      }
     })
   } catch (error) {
     next(error)

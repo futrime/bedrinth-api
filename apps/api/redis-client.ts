@@ -69,7 +69,7 @@ export class RedisClient implements DatabaseClient {
     }
   }
 
-  async search (q: string, perPage: number, page: number, sort: 'hotness' | 'updated', order: 'asc' | 'desc'): Promise<Package[]> {
+  async search (q: string, perPage: number, page: number, sort: 'hotness' | 'updated', order: 'asc' | 'desc'): Promise<{ packages: Package[], pageCount: number }> {
     await this.repository.createIndex()
 
     const offset = (page - 1) * perPage
@@ -98,22 +98,27 @@ export class RedisClient implements DatabaseClient {
       }
     }
 
+    const pageCount = Math.ceil(await query.count() / perPage)
+
     const entities = await query.sortBy(sortFieldMap[sort], sortOrderMap[order] as 'ASC' | 'DESC').return.page(offset, perPage)
 
-    return entities.map((entity: any) => ({
-      source: entity.source,
-      identifier: entity.identifier,
-      name: entity.name,
-      description: entity.description,
-      author: entity.author,
-      tags: entity.tags,
-      avatarUrl: entity.avatarUrl,
-      hotness: entity.hotness,
-      updated: entity.updated,
-      versions: entity.versions.map((release: { version: string, releasedAt: string }) => ({
-        version: release.version,
-        releasedAt: release.releasedAt
-      }))
-    }))
+    return {
+      packages: entities.map((entity: any) => ({
+        source: entity.source,
+        identifier: entity.identifier,
+        name: entity.name,
+        description: entity.description,
+        author: entity.author,
+        tags: entity.tags,
+        avatarUrl: entity.avatarUrl,
+        hotness: entity.hotness,
+        updated: entity.updated,
+        versions: entity.versions.map((release: { version: string, releasedAt: string }) => ({
+          version: release.version,
+          releasedAt: release.releasedAt
+        }))
+      })),
+      pageCount
+    }
   }
 }

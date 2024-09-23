@@ -50,6 +50,12 @@ async function main (): Promise<void> {
     next()
   })
 
+  app.use('/packages/:source/:owner/:repo', (req, res, next) => {
+    const { source, owner, repo } = req.params
+    req.app.locals.source = source
+    req.app.locals.identifier = `${owner}/${repo}`
+    getPackageRouter(req, res, next)
+  })
   app.use('/packages/:source/:identifier', (req, res, next) => {
     const { source, identifier } = req.params
     req.app.locals.source = source
