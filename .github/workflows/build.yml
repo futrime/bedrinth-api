@@ -10,9 +10,29 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-docker-images:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - api
+          - github-bot
+          - pypi-bot
+    steps:
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: apps/${{ matrix.app }}
+
   check-style:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         app:
           - api
@@ -26,26 +46,6 @@ jobs:
           node-version: 20
 
       - run: |
-          npm i -g ts-standard
-
-      - run: |
-          ts-standard ./**/*.ts
-        working-directory: ./apps/${{ matrix.app }}
-
-  build-docker-images:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        app:
-          - api
-          - github-bot
-          - pypi-bot
-    steps:
-      - uses: docker/setup-qemu-action@v3
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/build-push-action@v5
-        with:
-          platforms: linux/amd64,linux/arm64
-          context: ./apps/${{ matrix.app }}
+          npm ci
+          npx ts-standard **/*.ts
+        working-directory: apps/${{ matrix.app }}
