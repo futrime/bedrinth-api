@@ -1,40 +1,51 @@
 openapi: 3.0.0
 info:
-  title: lip-index API
-  version: 1.0.0
+  title: lippkg API
+  version: 2.0.0
+security: []
 paths:
-  /search/teeth:
+  /packages:
     get:
-      summary: Search teeth
+      summary: Search packages
+      security: []
       parameters:
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: perPage
-        in: query
-        required: false
-        schema:
-          type: integer
-      - name: page
-        in: query
-        required: false
-        schema:
-          type: integer
-      - name: sort
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: order
-        in: query
-        required: false
-        schema:
-          type: string
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: perPage
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - hotness
+              - updated
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
       responses:
-        '200':
-          description: 'OK'
+        "200":
+          description: "OK"
           content:
             application/json:
               schema:
@@ -54,15 +65,12 @@ paths:
                         items:
                           type: object
                           properties:
-                            repoPath:
+                            source:
                               type: string
-                            repoOwner:
-                              type: string
-                            repoName:
-                              type: string
-                            latestVersion:
-                              type: string
-                            latestVersionReleasedAt:
+                              enum:
+                                - github
+                                - pypi
+                            identifier:
                               type: string
                             name:
                               type: string
@@ -77,67 +85,60 @@ paths:
                             avatarUrl:
                               type: string
                               nullable: true
-                            source:
+                            hotness:
+                              type: number
+                            updated:
                               type: string
-                            sourceRepoCreatedAt:
-                              type: string
-                            sourceRepoStarCount:
-                              type: integer
                           required:
-                          - repoPath
-                          - repoOwner
-                          - repoName
-                          - name
-                          - description
-                          - author
-                          - tags
-                          - latestVersion
-                          - latestVersionReleasedAt
-                          - source
-                          - sourceRepoCreatedAt
-                          - sourceRepoStarCount
-                          - avatarUrl
+                            - source
+                            - identifier
+                            - name
+                            - description
+                            - author
+                            - tags
+                            - avatarUrl
+                            - hotness
+                            - updated
                     required:
-                    - items
-                    - pageIndex
-                    - totalPages
+                      - pageIndex
+                      - totalPages
+                      - items
                 required:
-                - apiVersion
-                - data
-        '400':
-          description: 'Bad Request'
+                  - apiVersion
+                  - data
+        "400":
+          description: "Bad Request"
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
-        '500':
-          description: 'Internal Server Error'
+        "500":
+          description: "Internal Server Error"
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
-  /teeth/{repoOwner}/{repoName}/{version}:
+  /packages/{source}/{identifier}:
     get:
-      summary: Get a tooth
+      summary: Get a package
+      security: []
       parameters:
-      - name: repoOwner
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: repoName
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: version
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: source
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - github
+              - pypi
+        - name: identifier
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
-        '200':
-          description: 'OK'
+        "200":
+          description: "OK"
           content:
             application/json:
               schema:
@@ -148,15 +149,12 @@ paths:
                   data:
                     type: object
                     properties:
-                      repoPath:
+                      source:
                         type: string
-                      repoOwner:
-                        type: string
-                      repoName:
-                        type: string
-                      version:
-                        type: string
-                      releasedAt:
+                        enum:
+                          - github
+                          - pypi
+                      identifier:
                         type: string
                       name:
                         type: string
@@ -171,12 +169,10 @@ paths:
                       avatarUrl:
                         type: string
                         nullable: true
-                      source:
+                      hotness:
+                        type: number
+                      updated:
                         type: string
-                      sourceRepoCreatedAt:
-                        type: string
-                      sourceRepoStarCount:
-                        type: integer
                       versions:
                         type: array
                         items:
@@ -187,40 +183,30 @@ paths:
                             releasedAt:
                               type: string
                           required:
-                          - version
-                          - releasedAt
+                            - version
+                            - releasedAt
                     required:
-                    - versions
-                    - repoPath
-                    - repoOwner
-                    - repoName
-                    - version
-                    - releasedAt
-                    - name
-                    - description
-                    - author
-                    - tags
-                    - source
-                    - sourceRepoCreatedAt
-                    - sourceRepoStarCount
-                    - avatarUrl
+                      - source
+                      - identifier
+                      - name
+                      - description
+                      - author
+                      - tags
+                      - avatarUrl
+                      - hotness
+                      - updated
+                      - versions
                 required:
-                - apiVersion
-                - data
-        '400':
-          description: 'Bad Request'
+                  - apiVersion
+                  - data
+        "404":
+          description: "Not Found"
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
-        '404':
-          description: 'Not Found'
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        500:
-          description: 'Internal Server Error'
+        "500":
+          description: "Internal Server Error"
           content:
             application/json:
               schema:
@@ -240,8 +226,8 @@ components:
             message:
               type: string
           required:
-          - code
-          - message
+            - code
+            - message
       required:
-      - error
-      - apiVersion
+        - error
+        - apiVersion

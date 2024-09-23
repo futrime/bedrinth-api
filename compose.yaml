@@ -1,22 +1,44 @@
 services:
-  app:
-    image: ghcr.io/futrime/lip-index:latest
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
     depends_on:
-      - postgres
+      - db
     environment:
-      GITHUB_BOT_EXPIRE: 86400
-      GITHUB_BOT_INTERVAL: 600
-      GITHUB_BOT_TOKEN: <YOUR_GITHUB_TOKEN>
-      NODE_ENV: production
-      POSTGRES_HOST: postgres
-    links:
-      - postgres
+      - DATABASE_URL=redis://db:6379
+      - LISTEN_PORT=80
+      - LOG_LEVEL=${LOG_LEVEL:-3}
     ports:
-      - 127.0.0.1:44388:80
+      - 44388:80
     restart: always
-  
-  postgres:
-    image: postgres:alpine
+
+  github-bot:
+    build:
+      context: ./apps/github-bot
+      dockerfile: Dockerfile
+    depends_on:
+      - db
     environment:
-      POSTGRES_PASSWORD: postgres
+      - DATABASE_URL=redis://db:6379
+      - EXPIRATION=${EXPIRATION:-3600}
+      - FETCH_INTERVAL=${FETCH_INTERVAL:-1800}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:?error}
+      - LOG_LEVEL=${LOG_LEVEL:-3}
     restart: always
+
+  pypi-bot:
+    build:
+      context: ./apps/pypi-bot
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=redis://db:6379
+      - EXPIRATION=${EXPIRATION:-3600}
+      - FETCH_INTERVAL=${FETCH_INTERVAL:-1800}
+      - LOG_LEVEL=${LOG_LEVEL:-3}
+    restart: always
+
+  db:
+    image: redis/redis-stack-server:7.4.0-v0

@@ -1,0 +1,22 @@
+{
+  "name": "lippkg-github-bot",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@tsconfig/node20": "^20.1.4",
+    "@types/node": "^22.5.5",
+    "ts-standard": "^12.0.2",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "consola": "^3.2.3",
+    "dotenv": "^16.4.5",
+    "octokit": "^4.0.2",
+    "redis": "^4.7.0",
+    "redis-om": "^0.4.6"
+  }
+}
