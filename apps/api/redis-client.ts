@@ -85,14 +85,15 @@ export class RedisClient implements DatabaseClient {
     let query = this.repository.search()
 
     if (q.length > 0) {
-      const qList = q.split(' ')
+      const qList = q.replaceAll('*', ' ').split(' ').filter(item => item.length > 0)
 
       for (const qItem of qList) {
+        const pattern = `*${qItem}*`
         query = query.and(search => search
-          .where('name').matches(qItem)
-          .or('description').matches(qItem)
-          .or('author').matches(qItem)
-          .or('tags').contains(qItem)
+          .or('name').matches(pattern)
+          .or('description').matches(pattern)
+          .or('author').matches(pattern)
+          .or('tags').contains(pattern)
         )
       }
     }
