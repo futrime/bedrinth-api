@@ -23,7 +23,12 @@ export class RedisClient implements DatabaseClient {
   private readonly repository: Repository
 
   constructor (url: string) {
-    this.client = createClient({ url })
+    this.client = createClient({
+      url,
+      socket: {
+        reconnectStrategy: () => 500
+      }
+    })
     this.client.on('error', (err) => {
       consola.error('Redis error:', err)
     })

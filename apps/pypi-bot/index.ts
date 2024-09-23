@@ -5,12 +5,16 @@ import { RedisClient } from './redis-client.js'
 
 interface Config {
   databaseUrl: string
+  expiration: number
+  fetchInterval: number
   logLevel: number
 }
 
 async function main (): Promise<void> {
   const config: Config = {
     databaseUrl: process.env.DATABASE_URL ?? 'redis://localhost:6379',
+    expiration: Number(process.env.EXPIRATION ?? 60 * 60),
+    fetchInterval: Number(process.env.FETCH_INTERVAL ?? 60 * 30),
     logLevel: Number(process.env.LOG_LEVEL ?? 3)
   }
 
@@ -20,13 +24,24 @@ async function main (): Promise<void> {
   const redisClient = new RedisClient(config.databaseUrl)
   await redisClient.connect()
 
-  while (true) {
+  async function fetchAndSave (): Promise<void> {
     for await (const packageInfo of fetcher.fetch()) {
-      consola.log(packageInfo)
-
-      await redisClient.save(packageInfo, 60 * 60)
+      await redisClient.save(packageInfo, config.expiration)
+      consola.log(`Fetched ${packageInfo.identifier}`)
     }
   }
+
+  // Initial fetch
+  await fetchAndSave()
+
+  // Set up interval for subsequent fetches
+  setInterval(() => {
+    (async () => {
+      await fetchAndSave()
+    })().catch((error) => {
+      consola.error('Error fetching and saving packages:', error)
+    })
+  }, config.fetchInterval * 1000)
 }
 
 main().catch((error) => {

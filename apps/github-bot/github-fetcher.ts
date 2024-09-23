@@ -1,5 +1,5 @@
 import { Octokit } from 'octokit'
-import { Package } from './package.js'
+import { Package, Release } from './package.js'
 import consola from 'consola'
 import { PackageFetcher } from './package-fetcher.js'
 
@@ -20,13 +20,13 @@ export class GitHubFetcher implements PackageFetcher {
   public async * fetch (): AsyncGenerator<Package> {
     consola.debug('Fetching packages')
 
-    for await (const repository of this.searchRepositories()) {
+    for await (const { owner, repo } of this.searchRepositories()) {
       try {
-        const packageInfo = await this.fetchPackage(repository)
+        const packageInfo = await this.fetchPackage(owner, repo)
 
         yield packageInfo
       } catch (error) {
-        consola.error(`Error fetching ${repository.owner}/${repository.repo}:`, error)
+        consola.error(`Error fetching ${owner}/${repo}:`, error)
       }
     }
   }
@@ -45,23 +45,37 @@ export class GitHubFetcher implements PackageFetcher {
     return new Date(data.Time)
   }
 
-  private async fetchPackage (repository: Repository): Promise<Package> {
-    consola.debug(`Fetching ${repository.owner}/${repository.repo}`)
+  private async fetchPackage (owner: string, repo: string): Promise<Package> {
+    consola.debug(`Fetching ${owner}/${repo}`)
 
-    const toothMetadata = await this.fetchToothMetadata(repository.owner, repository.repo)
-    const latestReleaseTime = await this.fetchLatestReleaseTime(repository.owner, repository.repo)
+    const toothMetadata = await this.fetchToothMetadata(owner, repo)
+    const repository = await this.fetchRepository(owner, repo)
+    const latestReleaseTime = await this.fetchLatestReleaseTime(owner, repo)
 
-    const identifier = `${repository.owner}/${repository.repo}`
+    const identifier = `${owner}/${repo}`
     return {
       identifier,
       name: toothMetadata.info.name,
       description: toothMetadata.info.description,
-      author: repository.owner,
+      author: owner,
       tags: toothMetadata.info.tags,
       avatarUrl: '',
       hotness: repository.stars,
       updated: latestReleaseTime.toISOString(),
-      versions: []
+      versions: repository.releases
+    }
+  }
+
+  private async fetchRepository (owner: string, repo: string): Promise<Repository> {
+    const { data: repoData } = await this.octokit.rest.repos.get({ owner, repo })
+    const { data: releasesData } = await this.octokit.rest.repos.listReleases({ owner, repo })
+
+    return {
+      stars: repoData.stargazers_count,
+      releases: releasesData.filter((release) => release.published_at !== null).map((release) => ({
+        version: release.tag_name.replace(/^v/, ''),
+        releasedAt: release.published_at as string
+      }))
     }
   }
 
@@ -77,7 +91,7 @@ export class GitHubFetcher implements PackageFetcher {
    *
    * @returns an async generator that yields objects with owner and repo properties
    */
-  private async * searchRepositories (): AsyncGenerator<Repository, void, unknown> {
+  private async * searchRepositories (): AsyncGenerator<{ owner: string, repo: string }, void, unknown> {
     const query = 'path:/+filename:tooth.json+"format_version"+2+"tooth"+"version"+"info"+"name"+"description"+"author"+"tags"'
     let page = 1
     let hasMore = true
@@ -87,7 +101,6 @@ export class GitHubFetcher implements PackageFetcher {
 
       const { data } = await this.octokit.rest.search.code({
         q: query,
-
         per_page: 100,
         page
       })
@@ -95,8 +108,7 @@ export class GitHubFetcher implements PackageFetcher {
       for (const item of data.items) {
         const owner = item.repository.owner.login
         const repo = item.repository.name
-        const stars = item.repository.stargazers_count ?? 0
-        yield { owner, repo, stars }
+        yield { owner, repo }
       }
 
       hasMore = data.incomplete_results
@@ -106,13 +118,11 @@ export class GitHubFetcher implements PackageFetcher {
 }
 
 interface Repository {
-  owner: string
-  repo: string
   stars: number
+  releases: Release[]
 }
 
 interface ToothMetadata {
-
   info: {
     name: string
     description: string

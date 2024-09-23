@@ -11,6 +11,7 @@ RUN npm ci --omit=dev
 
 FROM gcr.io/distroless/nodejs20-debian12
 WORKDIR /app
+COPY package.json package-lock.json /app/
 COPY --from=builder /app/dist /app/dist
 COPY --from=runner-base /app/node_modules /app/node_modules
 ENV NODE_ENV=production

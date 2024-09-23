@@ -1,0 +1,37 @@
+services:
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=redis://db:6379
+      - LISTEN_PORT=80
+    ports:
+      - 44388:80
+    restart: always
+
+  github-bot:
+    build:
+      context: ./apps/github-bot
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=redis://db:6379
+      - GITHUB_TOKEN=${GITHUB_TOKEN:?error}
+    restart: always
+
+  pypi-bot:
+    build:
+      context: ./apps/pypi-bot
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=redis://db:6379
+    restart: always
+
+  db:
+    image: redis/redis-stack-server:7.4.0-v0
