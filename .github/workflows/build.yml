@@ -12,6 +12,12 @@ on:
 jobs:
   check-style:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - api
+          - github-bot
+          - pypi-bot
     steps:
       - uses: actions/checkout@v4
 
@@ -23,4 +29,23 @@ jobs:
           npm i -g ts-standard
 
       - run: |
-          ts-standard apps/**/*.ts
+          ts-standard ./**/*.ts
+        working-directory: ./apps/${{ matrix.app }}
+
+  build-docker-images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - api
+          - github-bot
+          - pypi-bot
+    steps:
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v5
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: ./apps/${{ matrix.app }}
