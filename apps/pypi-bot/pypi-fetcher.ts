@@ -1,8 +1,15 @@
 import { Package } from './package.js'
 import consola from 'consola'
 import { PackageFetcher } from './package-fetcher.js'
+import { Octokit } from 'octokit'
 
 export class PypiFetcher implements PackageFetcher {
+  private readonly octokit: Octokit
+
+  constructor () {
+    this.octokit = new Octokit()
+  }
+
   /**
    * Fetches packages from GitHub
    * @returns an async generator that yields Package objects
@@ -35,6 +42,8 @@ export class PypiFetcher implements PackageFetcher {
 
     const data = await response.json() as PypiResponse
 
+    const stars = await this.fetchStars(project)
+
     // Remove empty releases
     const releases = Object.keys(data.releases).filter(version => data.releases[version].length > 0)
 
@@ -45,13 +54,36 @@ export class PypiFetcher implements PackageFetcher {
       author: data.info.author ?? data.info.author_email ?? 'Unknown',
       tags: (data.info.keywords ?? '').split(',').map(tag => tag.trim()),
       avatarUrl: '',
-      hotness: data.info.downloads.last_month,
+      hotness: stars,
       updated: data.releases[data.info.version][0].upload_time_iso_8601,
       versions: releases.map(version => ({
         version,
         releasedAt: data.releases[version][0].upload_time_iso_8601
       }))
     }
+  }
+
+  private async fetchStars (project: string): Promise<number> {
+    const url = `https://pypi.org/project/${project}`
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const regex = /"https:\/\/api.github.com\/repos\/(.+?)\/(.+?)"/
+    const match = regex.exec(data)
+
+    if (match != null) {
+      const owner = match[1]
+      const repo = match[2]
+
+      const { data } = await this.octokit.rest.repos.get({
+        owner,
+        repo
+      })
+
+      return data.stargazers_count
+    }
+
+    return 0
   }
 
   private async * searchProjects (): AsyncGenerator<string> {
