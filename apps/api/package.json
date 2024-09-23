@@ -1,5 +1,5 @@
 {
-  "name": "lippkg-github-bot",
+  "name": "lippkg-api",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -13,9 +13,15 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/morgan": "^1.9.9",
     "consola": "^3.2.3",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "octokit": "^4.0.2",
+    "express": "^4.21.0",
+    "http-errors": "^2.0.0",
+    "morgan": "^1.10.0",
     "redis": "^4.7.0",
     "redis-om": "^0.4.6"
   }

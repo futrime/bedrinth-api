@@ -173,9 +173,6 @@ paths:
                         type: number
                       updated:
                         type: string
-                      readme:
-                        type: string
-                        nullable: true
                       versions:
                         type: array
                         items:
@@ -198,22 +195,17 @@ paths:
                       - avatarUrl
                       - hotness
                       - updated
+                      - versions
                 required:
                   - apiVersion
                   - data
-        "400":
-          description: "Bad Request"
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
         "404":
           description: "Not Found"
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
-        500:
+        "500":
           description: "Internal Server Error"
           content:
             application/json:

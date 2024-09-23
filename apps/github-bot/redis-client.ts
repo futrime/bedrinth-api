@@ -7,15 +7,15 @@ import consola from 'consola'
 const schema = new Schema('package', {
   source: { type: 'string' },
   identifier: { type: 'string' },
-  name: { type: 'string' },
+  name: { type: 'text' },
   description: { type: 'text' },
-  author: { type: 'string' },
+  author: { type: 'text' },
   tags: { type: 'string[]' },
   avatarUrl: { type: 'string' },
-  hotness: { type: 'number' },
-  updated: { type: 'string' },
-  release_versions: { type: 'string[]', path: '$.versions[*].version' },
-  release_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' }
+  hotness: { type: 'number', sortable: true },
+  updated: { type: 'string', sortable: true },
+  versions_version: { type: 'string[]', path: '$.versions[*].version' },
+  versions_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' }
 })
 
 export class RedisClient implements DatabaseClient {
