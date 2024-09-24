@@ -193,6 +193,7 @@ components:
         updated:
           type: string
       required:
+        - packageManager
         - source
         - identifier
         - name
