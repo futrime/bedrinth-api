@@ -14,7 +14,7 @@ const schema = new Schema('package', {
   tags: { type: 'string[]' },
   avatarUrl: { type: 'string' },
   hotness: { type: 'number', sortable: true },
-  updated: { type: 'string', sortable: true },
+  updated: { type: 'string' },
   versions_version: { type: 'string[]', path: '$.versions[*].version' },
   versions_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' }
 })
