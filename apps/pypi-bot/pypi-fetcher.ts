@@ -59,7 +59,7 @@ export class PypiFetcher implements PackageFetcher {
       versions: releases.map(version => ({
         version,
         releasedAt: data.releases[version][0].upload_time_iso_8601
-      }))
+      })).reverse()
     }
   }
 
