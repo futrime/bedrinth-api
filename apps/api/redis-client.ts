@@ -86,7 +86,7 @@ export class RedisClient implements DatabaseClient {
 
     let query = this.repository.search()
 
-    if (q.length > 0) {
+    if (q.length > 1) {
       const qList = q.replaceAll('*', ' ').split(' ').filter(item => item.length > 0)
 
       for (const qItem of qList) {
