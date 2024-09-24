@@ -1,15 +1,10 @@
 import { Package } from './package.js'
 import consola from 'consola'
 import { PackageFetcher } from './package-fetcher.js'
-import { Octokit } from 'octokit'
+
+const downloadToHotnessMagicNumber = 1 / 13
 
 export class PypiFetcher implements PackageFetcher {
-  private readonly octokit: Octokit
-
-  constructor () {
-    this.octokit = new Octokit()
-  }
-
   /**
    * Fetches packages from GitHub
    * @returns an async generator that yields Package objects
@@ -42,7 +37,7 @@ export class PypiFetcher implements PackageFetcher {
 
     const data = await response.json() as PypiResponse
 
-    const stars = await this.fetchStars(project)
+    const hotness = Math.round(await this.fetchMonthlyDownloadCount(project) * downloadToHotnessMagicNumber)
 
     // Remove empty releases
     const releases = Object.keys(data.releases).filter(version => data.releases[version].length > 0)
@@ -61,7 +56,7 @@ export class PypiFetcher implements PackageFetcher {
       author: data.info.author ?? data.info.author_email ?? 'Unknown',
       tags: (data.info.keywords ?? '').split(',').map(tag => tag.trim()),
       avatarUrl: '',
-      hotness: stars,
+      hotness,
       updated: data.releases[data.info.version][0].upload_time_iso_8601,
       versions: releases.map(version => ({
         version,
@@ -70,27 +65,12 @@ export class PypiFetcher implements PackageFetcher {
     }
   }
 
-  private async fetchStars (project: string): Promise<number> {
-    const url = `https://pypi.org/project/${project}`
+  private async fetchMonthlyDownloadCount (project: string): Promise<number> {
+    const url = `https://pypistats.org/api/packages/${project}/recent`
     const response = await fetch(url)
-    const data = await response.text()
+    const data = await response.json() as PypiStatsRecentResponse
 
-    const regex = /"https:\/\/api.github.com\/repos\/(.+?)\/(.+?)"/
-    const match = regex.exec(data)
-
-    if (match != null) {
-      const owner = match[1]
-      const repo = match[2]
-
-      const { data } = await this.octokit.rest.repos.get({
-        owner,
-        repo
-      })
-
-      return data.stargazers_count
-    }
-
-    return 0
+    return data.data.last_month
   }
 
   private async * searchProjects (): AsyncGenerator<string> {
@@ -136,5 +116,11 @@ interface PypiResponse {
     [version: string]: Array<{
       upload_time_iso_8601: string
     }>
+  }
+}
+
+interface PypiStatsRecentResponse {
+  data: {
+    last_month: number
   }
 }
