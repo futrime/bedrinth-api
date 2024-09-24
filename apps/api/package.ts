@@ -1,4 +1,5 @@
 export interface Package {
+  packageManager: string
   source: string
   identifier: string
   name: string

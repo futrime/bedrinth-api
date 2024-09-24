@@ -60,6 +60,7 @@ router.get('/', (async (req, res, next) => {
         pageIndex: params.page,
         totalPages: packages.pageCount,
         items: packages.packages.map((pkg) => ({
+          packageManager: pkg.packageManager,
           source: pkg.source,
           identifier: pkg.identifier,
           name: pkg.name,

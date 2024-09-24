@@ -5,6 +5,7 @@ import { Package } from './package.js'
 import consola from 'consola'
 
 const schema = new Schema('package', {
+  packageManager: { type: 'string' },
   source: { type: 'string' },
   identifier: { type: 'string' },
   name: { type: 'text' },
@@ -47,6 +48,7 @@ export class RedisClient implements DatabaseClient {
   async save (pkg: Package, expiration: number): Promise<void> {
     const entityId = `github:${pkg.identifier}`
     const entityData = {
+      packageManager: 'lip',
       source: 'github',
       ...pkg
     }

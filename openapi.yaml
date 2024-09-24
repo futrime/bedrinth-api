@@ -63,42 +63,7 @@ paths:
                       items:
                         type: array
                         items:
-                          type: object
-                          properties:
-                            source:
-                              type: string
-                              enum:
-                                - github
-                                - pypi
-                            identifier:
-                              type: string
-                            name:
-                              type: string
-                            description:
-                              type: string
-                            author:
-                              type: string
-                            tags:
-                              type: array
-                              items:
-                                type: string
-                            avatarUrl:
-                              type: string
-                              nullable: true
-                            hotness:
-                              type: number
-                            updated:
-                              type: string
-                          required:
-                            - source
-                            - identifier
-                            - name
-                            - description
-                            - author
-                            - tags
-                            - avatarUrl
-                            - hotness
-                            - updated
+                          "$ref": "#/components/schemas/PackageInfo"
                     required:
                       - pageIndex
                       - totalPages
@@ -142,37 +107,10 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  apiVersion:
-                    type: string
-                  data:
-                    type: object
+                allOf:
+                  - "$ref": "#/components/schemas/PackageInfo"
+                  - type: object
                     properties:
-                      source:
-                        type: string
-                        enum:
-                          - github
-                          - pypi
-                      identifier:
-                        type: string
-                      name:
-                        type: string
-                      description:
-                        type: string
-                      author:
-                        type: string
-                      tags:
-                        type: array
-                        items:
-                          type: string
-                      avatarUrl:
-                        type: string
-                        nullable: true
-                      hotness:
-                        type: number
-                      updated:
-                        type: string
                       versions:
                         type: array
                         items:
@@ -186,15 +124,6 @@ paths:
                             - version
                             - releasedAt
                     required:
-                      - source
-                      - identifier
-                      - name
-                      - description
-                      - author
-                      - tags
-                      - avatarUrl
-                      - hotness
-                      - updated
                       - versions
                 required:
                   - apiVersion
@@ -231,3 +160,45 @@ components:
       required:
         - error
         - apiVersion
+    PackageInfo:
+      type: object
+      properties:
+        packageManager:
+          type: string
+          enum:
+            - lip
+            - pip
+        source:
+          type: string
+          enum:
+            - github
+            - pypi
+        identifier:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        author:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        hotness:
+          type: number
+        updated:
+          type: string
+      required:
+        - source
+        - identifier
+        - name
+        - description
+        - author
+        - tags
+        - avatarUrl
+        - hotness
+        - updated
