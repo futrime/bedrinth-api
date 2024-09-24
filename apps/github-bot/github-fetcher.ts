@@ -55,7 +55,7 @@ export class GitHubFetcher implements PackageFetcher {
     const repository = await this.fetchRepository(owner, repo)
     const latestReleaseTime = await this.fetchLatestReleaseTime(owner, repo)
 
-    const identifier = `github.com/${owner}/${repo}`
+    const identifier = `${owner}/${repo}`
     return {
       identifier,
       name: toothMetadata.info.name,
