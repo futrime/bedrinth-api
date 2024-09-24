@@ -2,6 +2,7 @@ import { Octokit } from 'octokit'
 import { Package, Release } from './package.js'
 import consola from 'consola'
 import { PackageFetcher } from './package-fetcher.js'
+import semver from 'semver'
 
 export class GitHubFetcher implements PackageFetcher {
   private readonly octokit: Octokit
@@ -36,6 +37,8 @@ export class GitHubFetcher implements PackageFetcher {
    * @returns the latest release time
    */
   private async fetchLatestReleaseTime (owner: string, repo: string): Promise<Date> {
+    consola.debug(`Fetching latest release time for ${owner}/${repo}`)
+
     const escapedOwner = escapeForGoProxy(owner)
     const escapedRepo = escapeForGoProxy(repo)
     const url = `https://goproxy.io/github.com/${escapedOwner}/${escapedRepo}/@latest`
@@ -46,7 +49,7 @@ export class GitHubFetcher implements PackageFetcher {
   }
 
   private async fetchPackage (owner: string, repo: string): Promise<Package> {
-    consola.debug(`Fetching ${owner}/${repo}`)
+    consola.debug(`Fetching package ${owner}/${repo}`)
 
     const toothMetadata = await this.fetchToothMetadata(owner, repo)
     const repository = await this.fetchRepository(owner, repo)
@@ -67,19 +70,45 @@ export class GitHubFetcher implements PackageFetcher {
   }
 
   private async fetchRepository (owner: string, repo: string): Promise<Repository> {
+    consola.debug(`Fetching repository ${owner}/${repo}`)
+
     const { data: repoData } = await this.octokit.rest.repos.get({ owner, repo })
-    const { data: releasesData } = await this.octokit.rest.repos.listReleases({ owner, repo })
+
+    const releases: Release[] = []
+
+    let hasMore = true
+    let page = 1
+
+    while (hasMore) {
+      consola.debug(`Fetching releases for ${owner}/${repo} (page ${page})`)
+
+      const { data: releasesData } = await this.octokit.rest.repos.listReleases({ owner, repo, page, per_page: 100 })
+      releases.push(
+        ...releasesData.map((release) => ({
+          version: release.tag_name.replace(/^v/, ''),
+          releasedAt: release.published_at as string
+        })).filter((release) => semver.valid(release.version))
+      )
+      hasMore = releasesData.length === 100
+      page++
+    }
+
+    const dateSorter = (a: string, b: string): number => {
+      const aDate = new Date(a)
+      const bDate = new Date(b)
+
+      return aDate.getTime() - bDate.getTime()
+    }
 
     return {
       stars: repoData.stargazers_count,
-      releases: releasesData.filter((release) => release.published_at !== null).map((release) => ({
-        version: release.tag_name.replace(/^v/, ''),
-        releasedAt: release.published_at as string
-      }))
+      releases: releases.toSorted((a, b) => dateSorter(b.releasedAt, a.releasedAt))
     }
   }
 
   private async fetchToothMetadata (owner: string, repo: string): Promise<ToothMetadata> {
+    consola.debug(`Fetching tooth metadata for ${owner}/${repo}`)
+
     const url = `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/tooth.json`
     const response = await fetch(url)
     const data = await response.json()
@@ -92,12 +121,14 @@ export class GitHubFetcher implements PackageFetcher {
    * @returns an async generator that yields objects with owner and repo properties
    */
   private async * searchRepositories (): AsyncGenerator<{ owner: string, repo: string }, void, unknown> {
+    consola.debug('Searching repositories')
+
     const query = 'path:/+filename:tooth.json+"format_version"+2+"tooth"+"version"+"info"+"name"+"description"+"author"+"tags"'
     let page = 1
     let hasMore = true
 
     while (hasMore) {
-      consola.debug(`Searching page ${page}`)
+      consola.debug(`Searching repositories (page ${page})`)
 
       const { data } = await this.octokit.rest.search.code({
         q: query,

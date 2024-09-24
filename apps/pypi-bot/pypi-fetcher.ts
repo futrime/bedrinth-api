@@ -47,6 +47,13 @@ export class PypiFetcher implements PackageFetcher {
     // Remove empty releases
     const releases = Object.keys(data.releases).filter(version => data.releases[version].length > 0)
 
+    const dateSorter = (a: string, b: string): number => {
+      const aDate = new Date(a)
+      const bDate = new Date(b)
+
+      return aDate.getTime() - bDate.getTime()
+    }
+
     return {
       identifier: project,
       name: project,
@@ -59,7 +66,7 @@ export class PypiFetcher implements PackageFetcher {
       versions: releases.map(version => ({
         version,
         releasedAt: data.releases[version][0].upload_time_iso_8601
-      })).reverse()
+      })).toSorted((a, b) => dateSorter(b.releasedAt, a.releasedAt))
     }
   }
 
