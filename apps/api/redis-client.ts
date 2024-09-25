@@ -90,13 +90,19 @@ export class RedisClient implements DatabaseClient {
       const qList = q.replaceAll('*', ' ').split(' ').filter(item => item.length > 0)
 
       for (const qItem of qList) {
-        const pattern = `*${qItem}*`
-        query = query.and(search => search
-          .or('name').matches(pattern)
-          .or('description').matches(pattern)
-          .or('author').matches(pattern)
-          .or('tags').contains(pattern)
-        )
+        if (/^[a-z0-9-]+:[a-z0-9-]+$/.test(qItem)) {
+          query = query.and(search => search
+            .or('tags').contains(qItem)
+          )
+        } else {
+          const pattern = `*${qItem}*`
+          query = query.and(search => search
+            .or('name').matches(pattern)
+            .or('description').matches(pattern)
+            .or('author').matches(pattern)
+            .or('tags').contains(pattern)
+          )
+        }
       }
     }
 
