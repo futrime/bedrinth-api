@@ -108,19 +108,19 @@ export class GitHubFetcher implements PackageFetcher {
     while (hasMore) {
       consola.debug(`Searching repositories (page ${page})`)
 
-      const { data } = await this.octokit.rest.search.code({
+      const response = await this.octokit.rest.search.code({
         q: query,
         per_page: 100,
         page
       })
 
-      for (const item of data.items) {
+      for (const item of response.data.items) {
         const owner = item.repository.owner.login
         const repo = item.repository.name
         yield { owner, repo }
       }
 
-      hasMore = data.incomplete_results
+      hasMore = response.headers.link?.includes('rel="next"') ?? false
       page++
     }
   }
@@ -128,9 +128,9 @@ export class GitHubFetcher implements PackageFetcher {
   private async fetchRepository (repo: RepositoryDescriptor): Promise<FetchRepositoryResponse> {
     consola.debug(`Fetching repository ${repo.owner}/${repo.repo}`)
 
-    const data = await this.octokit.rest.repos.get({ owner: repo.owner, repo: repo.repo })
+    const response = await this.octokit.rest.repos.get({ owner: repo.owner, repo: repo.repo })
 
-    return data.data
+    return response.data
   }
 
   private async fetchToothMetadata (repo: RepositoryDescriptor): Promise<FetchToothMetadataResponse> {
