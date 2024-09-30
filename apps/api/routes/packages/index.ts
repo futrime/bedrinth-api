@@ -32,14 +32,14 @@ function parseParams (query: qs.ParsedQs): Params {
 function validateNumber (value: any, name: string, min: number, max: number): number {
   const num = Number(value)
   if (isNaN(num) || num < min || num > max) {
-    throw new createHttpError.NotFound(400, `invalid ${name}`)
+    throw new createHttpError.NotFound(`invalid ${name}`)
   }
   return num
 }
 
 function validateEnum<T extends string> (value: any, allowedValues: T[], name: string): T {
   if (!allowedValues.includes(value)) {
-    throw new createHttpError.NotFound(400, `invalid ${name}`)
+    throw new createHttpError.NotFound(`invalid ${name}`)
   }
   return value as T
 }
