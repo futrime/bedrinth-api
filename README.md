@@ -1,4 +1,4 @@
-# lippkg-api
+# bedrinth-api
 
 The Minecraft Bedrock mod index API
 
@@ -9,7 +9,7 @@ Before you start, you need to install [Docker](https://docs.docker.com/install/)
 Clone this repository.
 
 ```
-git clone https://github.com/futrime/lippkg-api.git
+git clone https://github.com/futrime/bedrinth-api.git
 ```
 
 Create a `.env` file in the repository directory as the `compose.yaml` file.
