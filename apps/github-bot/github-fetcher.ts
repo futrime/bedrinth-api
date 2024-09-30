@@ -2,7 +2,6 @@ import { Octokit } from 'octokit'
 import { Package, Release } from './package.js'
 import consola from 'consola'
 import { PackageFetcher } from './package-fetcher.js'
-import semver from 'semver'
 
 export class GitHubFetcher implements PackageFetcher {
   private readonly octokit: Octokit
@@ -21,63 +20,59 @@ export class GitHubFetcher implements PackageFetcher {
   public async * fetch (): AsyncGenerator<Package> {
     consola.debug('Fetching packages')
 
-    for await (const { owner, repo } of this.searchRepositories()) {
+    for await (const repo of this.fetchRepositories()) {
       try {
-        const packageInfo = await this.fetchPackage(owner, repo)
+        const packageInfo = await this.fetchPackage(repo)
 
         yield packageInfo
       } catch (error) {
-        consola.error(`Error fetching ${owner}/${repo}:`, error)
+        consola.error(`Error fetching ${repo.owner}/${repo.repo}:`, error)
       }
     }
   }
 
-  private async fetchPackage (owner: string, repo: string): Promise<Package> {
-    consola.debug(`Fetching package ${owner}/${repo}`)
+  private async fetchGoproxyInfo (repo: RepositoryDescriptor, tag: string): Promise<FetchGoproxyInfoResponse> {
+    consola.debug(`Fetching goproxy info for ${repo.owner}/${repo.repo} ${tag}`)
 
-    const toothMetadata = await this.fetchToothMetadata(owner, repo)
-    const repository = await this.fetchRepository(owner, repo)
-
-    const identifier = `${owner}/${repo}`
-    return {
-      identifier,
-      name: toothMetadata.info.name,
-      description: toothMetadata.info.description,
-      author: owner,
-      tags: toothMetadata.info.tags,
-      avatarUrl: '',
-      hotness: repository.stars,
-      updated: repository.releases[0].releasedAt,
-      versions: repository.releases
-    }
+    const url = `https://goproxy.io/github.com/${escapeForGoProxy(repo.owner)}/${escapeForGoProxy(repo.repo)}/@v/${tag}.info`
+    const response = await fetch(url)
+    const data = await response.json()
+    return data as FetchGoproxyInfoResponse
   }
 
-  private async fetchRepository (owner: string, repo: string): Promise<Repository> {
-    consola.debug(`Fetching repository ${owner}/${repo}`)
+  private async fetchGoProxyList (repo: RepositoryDescriptor): Promise<string[]> {
+    consola.debug(`Fetching goproxy list for ${repo.owner}/${repo.repo}`)
 
-    const { data: repoData } = await this.octokit.rest.repos.get({ owner, repo })
+    const url = `https://goproxy.io/github.com/${escapeForGoProxy(repo.owner)}/${escapeForGoProxy(repo.repo)}/@v/list`
+    const response = await fetch(url)
+    const data = await response.text()
+    return data.split('\n').map(line => line.trim()).filter(line => line.length > 0)
+  }
 
-    const releases: Release[] = []
+  private async fetchPackage (repo: RepositoryDescriptor): Promise<Package> {
+    consola.debug(`Fetching package ${repo.owner}/${repo.repo}`)
 
-    let hasMore = true
-    let page = 1
+    const toothMetadataPromise = this.fetchToothMetadata(repo)
+    const repositoryPromise = this.fetchRepository(repo)
+    const tagListPromise = this.fetchGoProxyList(repo)
 
-    while (hasMore) {
-      consola.debug(`Fetching releases for ${owner}/${repo} (page ${page})`)
-
-      const { data: releasesData } = await this.octokit.rest.repos.listReleases({ owner, repo, page, per_page: 100 })
-      releases.push(
-        ...releasesData.map((release) => ({
-          version: release.tag_name.replace(/^v/, ''),
-          releasedAt: new Date(release.published_at as string).toISOString()
-        })).filter((release) => semver.valid(release.version))
-      )
-      hasMore = releasesData.length === 100
-      page++
+    const goproxyInfoPromises: Array<Promise<FetchGoproxyInfoResponse | null>> = []
+    for (const tag of await tagListPromise) {
+      goproxyInfoPromises.push(this.fetchGoproxyInfo(repo, tag).catch(error => {
+        consola.error(`error fetching goproxy info for ${repo.owner}/${repo.repo} ${tag}:`, error)
+        return null
+      }))
     }
 
+    const [toothMetadata, repository, ...goproxyInfoList] = await Promise.all([toothMetadataPromise, repositoryPromise, ...goproxyInfoPromises])
+
+    const releases: Release[] = goproxyInfoList.filter(goproxyInfo => goproxyInfo !== null).map(goproxyInfo => ({
+      version: goproxyInfo.Version.replace(/^v/, '').replace(/\+incompatible/g, ''),
+      releasedAt: new Date(goproxyInfo.Time).toISOString()
+    }))
+
     if (releases.length === 0) {
-      throw new Error(`no releases found for ${owner}/${repo}`)
+      throw new Error(`no releases found for ${repo.owner}/${repo.repo}`)
     }
 
     const dateSorter = (a: string, b: string): number => {
@@ -87,27 +82,23 @@ export class GitHubFetcher implements PackageFetcher {
       return aDate.getTime() - bDate.getTime()
     }
 
+    const sortedReleases = releases.toSorted((a, b) => dateSorter(b.releasedAt, a.releasedAt))
+
+    const identifier = `${repo.owner}/${repo.repo}`
     return {
-      stars: repoData.stargazers_count,
-      releases: releases.toSorted((a, b) => dateSorter(b.releasedAt, a.releasedAt))
+      identifier,
+      name: toothMetadata.info.name,
+      description: toothMetadata.info.description,
+      author: repo.owner,
+      tags: toothMetadata.info.tags,
+      avatarUrl: '',
+      hotness: repository.stargazers_count,
+      updated: sortedReleases[0].releasedAt,
+      versions: sortedReleases
     }
   }
 
-  private async fetchToothMetadata (owner: string, repo: string): Promise<ToothMetadata> {
-    consola.debug(`Fetching tooth metadata for ${owner}/${repo}`)
-
-    const url = `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/tooth.json`
-    const response = await fetch(url)
-    const data = await response.json()
-    return data as ToothMetadata
-  }
-
-  /**
-   * Searches for repositories that contain a tooth.json file with the required structure.
-   *
-   * @returns an async generator that yields objects with owner and repo properties
-   */
-  private async * searchRepositories (): AsyncGenerator<{ owner: string, repo: string }, void, unknown> {
+  private async * fetchRepositories (): AsyncGenerator<RepositoryDescriptor, void, unknown> {
     consola.debug('Searching repositories')
 
     const query = 'path:/+filename:tooth.json+"format_version"+2+"tooth"+"version"+"info"+"name"+"description"+"author"+"tags"'
@@ -133,17 +124,47 @@ export class GitHubFetcher implements PackageFetcher {
       page++
     }
   }
+
+  private async fetchRepository (repo: RepositoryDescriptor): Promise<FetchRepositoryResponse> {
+    consola.debug(`Fetching repository ${repo.owner}/${repo.repo}`)
+
+    const data = await this.octokit.rest.repos.get({ owner: repo.owner, repo: repo.repo })
+
+    return data.data
+  }
+
+  private async fetchToothMetadata (repo: RepositoryDescriptor): Promise<FetchToothMetadataResponse> {
+    consola.debug(`Fetching tooth metadata for ${repo.owner}/${repo.repo}`)
+
+    const url = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/HEAD/tooth.json`
+    const response = await fetch(url)
+    const data = await response.json()
+    return data as FetchToothMetadataResponse
+  }
 }
 
-interface Repository {
-  stars: number
-  releases: Release[]
+function escapeForGoProxy (s: string): string {
+  return s.replace(/([A-Z])/g, (match) => `!${match.toLowerCase()}`)
 }
 
-interface ToothMetadata {
+interface FetchGoproxyInfoResponse {
+  Version: string
+  Time: string
+}
+
+interface FetchRepositoryResponse {
+  stargazers_count: number
+}
+
+interface FetchToothMetadataResponse {
   info: {
     name: string
     description: string
     tags: string[]
   }
+}
+
+interface RepositoryDescriptor {
+  owner: string
+  repo: string
 }
