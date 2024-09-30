@@ -42,6 +42,10 @@ export class PypiFetcher implements PackageFetcher {
     // Remove empty releases
     const releases = Object.keys(data.releases).filter(version => data.releases[version].length > 0)
 
+    if (releases.length === 0) {
+      throw new Error(`no releases found for ${project}`)
+    }
+
     const dateSorter = (a: string, b: string): number => {
       const aDate = new Date(a)
       const bDate = new Date(b)
@@ -57,10 +61,10 @@ export class PypiFetcher implements PackageFetcher {
       tags: ['platform:endstone', ...(data.info.keywords ?? '').split(',').map(tag => tag.trim())],
       avatarUrl: '',
       hotness,
-      updated: data.releases[data.info.version][0].upload_time_iso_8601,
+      updated: new Date(data.releases[data.info.version][0].upload_time_iso_8601).toISOString(),
       versions: releases.map(version => ({
         version,
-        releasedAt: data.releases[version][0].upload_time_iso_8601
+        releasedAt: new Date(data.releases[version][0].upload_time_iso_8601).toISOString()
       })).toSorted((a, b) => dateSorter(b.releasedAt, a.releasedAt))
     }
   }

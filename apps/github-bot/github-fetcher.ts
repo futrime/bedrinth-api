@@ -32,28 +32,11 @@ export class GitHubFetcher implements PackageFetcher {
     }
   }
 
-  /**
-   * Gets the latest release time for a repository
-   * @returns the latest release time
-   */
-  private async fetchLatestReleaseTime (owner: string, repo: string): Promise<Date> {
-    consola.debug(`Fetching latest release time for ${owner}/${repo}`)
-
-    const escapedOwner = escapeForGoProxy(owner)
-    const escapedRepo = escapeForGoProxy(repo)
-    const url = `https://goproxy.io/github.com/${escapedOwner}/${escapedRepo}/@latest`
-
-    const response = await fetch(url)
-    const data = await response.json() as { Time: string }
-    return new Date(data.Time)
-  }
-
   private async fetchPackage (owner: string, repo: string): Promise<Package> {
     consola.debug(`Fetching package ${owner}/${repo}`)
 
     const toothMetadata = await this.fetchToothMetadata(owner, repo)
     const repository = await this.fetchRepository(owner, repo)
-    const latestReleaseTime = await this.fetchLatestReleaseTime(owner, repo)
 
     const identifier = `${owner}/${repo}`
     return {
@@ -64,7 +47,7 @@ export class GitHubFetcher implements PackageFetcher {
       tags: toothMetadata.info.tags,
       avatarUrl: '',
       hotness: repository.stars,
-      updated: latestReleaseTime.toISOString(),
+      updated: repository.releases[0].releasedAt,
       versions: repository.releases
     }
   }
@@ -86,11 +69,15 @@ export class GitHubFetcher implements PackageFetcher {
       releases.push(
         ...releasesData.map((release) => ({
           version: release.tag_name.replace(/^v/, ''),
-          releasedAt: release.published_at as string
+          releasedAt: new Date(release.published_at as string).toISOString()
         })).filter((release) => semver.valid(release.version))
       )
       hasMore = releasesData.length === 100
       page++
+    }
+
+    if (releases.length === 0) {
+      throw new Error(`no releases found for ${owner}/${repo}`)
     }
 
     const dateSorter = (a: string, b: string): number => {
@@ -159,8 +146,4 @@ interface ToothMetadata {
     description: string
     tags: string[]
   }
-}
-
-function escapeForGoProxy (s: string): string {
-  return s.replace(/([A-Z])/g, (match) => `!${match.toLowerCase()}`)
 }
