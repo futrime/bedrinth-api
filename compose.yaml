@@ -13,9 +13,9 @@ services:
       - 127.0.0.1:44388:80
     restart: always
 
-  github-bot:
+  bot:
     build:
-      context: ./apps/github-bot
+      context: ./apps/bot
       dockerfile: Dockerfile
     depends_on:
       - db
@@ -24,19 +24,6 @@ services:
       - EXPIRATION=${EXPIRATION:-3600}
       - FETCH_INTERVAL=${FETCH_INTERVAL:-1800}
       - GITHUB_TOKEN=${GITHUB_TOKEN:?error}
-      - LOG_LEVEL=${LOG_LEVEL:-3}
-    restart: always
-
-  pypi-bot:
-    build:
-      context: ./apps/pypi-bot
-      dockerfile: Dockerfile
-    depends_on:
-      - db
-    environment:
-      - DATABASE_URL=redis://db:6379
-      - EXPIRATION=${EXPIRATION:-3600}
-      - FETCH_INTERVAL=${FETCH_INTERVAL:-1800}
       - LOG_LEVEL=${LOG_LEVEL:-3}
     restart: always
 

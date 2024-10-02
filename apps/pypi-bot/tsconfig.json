@@ -1,7 +1,0 @@
-{
-  "compilerOptions": {
-    "sourceMap": true,
-    "outDir": "dist",
-  },
-  "extends": "@tsconfig/node20/tsconfig.json"
-}

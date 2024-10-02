@@ -1,12 +1,14 @@
 import 'dotenv/config'
 import consola from 'consola'
-import { PypiFetcher } from './pypi-fetcher.js'
+import { EndstoneFetcher } from './endstone-fetcher.js'
+import { LeviLaminaFetcher } from './levilamina-fetcher.js'
 import { RedisClient } from './redis-client.js'
 
 interface Config {
   databaseUrl: string
   expiration: number
   fetchInterval: number
+  githubToken: string
   logLevel: number
 }
 
@@ -15,19 +17,26 @@ async function main (): Promise<void> {
     databaseUrl: process.env.DATABASE_URL ?? 'redis://localhost:6379',
     expiration: Number(process.env.EXPIRATION ?? 60 * 60),
     fetchInterval: Number(process.env.FETCH_INTERVAL ?? 60 * 30),
+    githubToken: process.env.GITHUB_TOKEN ?? '',
     logLevel: Number(process.env.LOG_LEVEL ?? 3)
   }
 
   consola.level = config.logLevel
 
-  const fetcher = new PypiFetcher()
+  const fetchers = [
+    new EndstoneFetcher(config.githubToken),
+    new LeviLaminaFetcher(config.githubToken)
+  ]
+
   const redisClient = new RedisClient(config.databaseUrl)
   await redisClient.connect()
 
   async function fetchAndSave (): Promise<void> {
-    for await (const packageInfo of fetcher.fetch()) {
-      await redisClient.save(packageInfo, config.expiration)
-      consola.log(`Fetched ${packageInfo.identifier}`)
+    for (const fetcher of fetchers) {
+      for await (const packageInfo of fetcher.fetch()) {
+        await redisClient.save(packageInfo, config.expiration)
+        consola.log(`Fetched ${packageInfo.source}:${packageInfo.identifier}`)
+      }
     }
   }
 

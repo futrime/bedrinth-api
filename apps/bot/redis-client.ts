@@ -19,6 +19,8 @@ const schema = new Schema('package', {
   versions_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' }
 })
 
+const reconnectTimeout = 500
+
 export class RedisClient implements DatabaseClient {
   private readonly client: RedisClientType
   private readonly repository: Repository
@@ -27,7 +29,7 @@ export class RedisClient implements DatabaseClient {
     this.client = createClient({
       url,
       socket: {
-        reconnectStrategy: () => 500
+        reconnectStrategy: () => reconnectTimeout
       }
     })
     this.client.on('error', (err) => {
@@ -46,10 +48,8 @@ export class RedisClient implements DatabaseClient {
   }
 
   async save (pkg: Package, expiration: number): Promise<void> {
-    const entityId = `github:${pkg.identifier}`
+    const entityId = `${pkg.source}:${pkg.identifier}`
     const entityData = {
-      packageManager: 'lip',
-      source: 'github',
       ...pkg
     }
 
