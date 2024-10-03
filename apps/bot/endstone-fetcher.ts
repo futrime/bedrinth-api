@@ -88,11 +88,11 @@ export class EndstoneFetcher extends GitHubFetcher {
       const packageInfo: Package = {
         packageManager: 'pip',
         source: 'pypi',
-        identifier: `${pypiPackageMetadata.info.name}`,
-        name: pypiPackageMetadata.info.name,
-        description: pypiPackageMetadata.info.summary,
+        identifier: `${projectMetadata.project.name}`,
+        name: projectMetadata.project.name,
+        description: projectMetadata.project.description ?? '',
         author: repository.owner.login,
-        tags: ['platform:endstone', ...(pypiPackageMetadata.info.keywords ?? '').split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)],
+        tags: ['platform:endstone', ...(projectMetadata.project.keywords ?? [])],
         avatarUrl: '',
         hotness: repository.stargazers_count,
         updated: '', // Add when normalized
@@ -115,10 +115,10 @@ export class EndstoneFetcher extends GitHubFetcher {
         packageManager: 'none',
         source: 'github',
         identifier: `${repo.owner}/${repo.repo}`,
-        name: repository.name,
-        description: repository.description ?? '',
+        name: projectMetadata.project.name,
+        description: projectMetadata.project.description ?? '',
         author: repository.owner.login,
-        tags: ['platform:endstone', ...(repository.topics ?? [])],
+        tags: ['platform:endstone', ...(projectMetadata.project.keywords ?? [])],
         avatarUrl: '',
         hotness: repository.stargazers_count,
         updated: '', // Add when normalized
@@ -156,8 +156,8 @@ export class EndstoneFetcher extends GitHubFetcher {
 interface PythonProjectMetadata {
   project: {
     name: string
-    description: string
-    keywords: string[]
+    description?: string
+    keywords?: string[]
   }
 }
 
