@@ -59,6 +59,7 @@ const TAG_REPLACEMENTS: Record<string, string> = {
   endstone: 'platform:endstone',
   levilamina: 'platform:levilamina',
   mod: 'type:mod',
+  plugin: 'type:mod',
   modpack: 'type:modpack',
   addon: 'type:addon',
   world: 'type:world',
