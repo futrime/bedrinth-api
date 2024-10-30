@@ -23,16 +23,18 @@ export function normalizePackage (pkg: Package): Package {
   }
 
   // Replace tags
-  normalizedPackage.tags = normalizedPackage.tags.map(tag => TAG_REPLACEMENTS[tag] ?? tag)
+  let tags = pkg.tags.map(tag => TAG_REPLACEMENTS[tag] ?? tag)
 
   // Deduplicate tags
-  normalizedPackage.tags = [...new Set(pkg.tags)]
+  tags = [...new Set(tags)]
+
+  normalizedPackage.tags = tags
 
   // Deduplicate versions
-  normalizedPackage.versions = [...new Map(pkg.versions.map(item => [item.version, item])).values()]
+  let versions = [...new Map(pkg.versions.map(item => [item.version, item])).values()]
 
   // Normalize release dates
-  normalizedPackage.versions = pkg.versions.map(version => {
+  versions = versions.map(version => {
     return {
       ...version,
       releasedAt: new Date(version.releasedAt).toISOString()
@@ -40,7 +42,9 @@ export function normalizePackage (pkg: Package): Package {
   })
 
   // Sort versions by release date
-  normalizedPackage.versions = normalizedPackage.versions.sort((a, b) => new Date(b.releasedAt).getTime() - new Date(a.releasedAt).getTime())
+  versions = versions.sort((a, b) => new Date(b.releasedAt).getTime() - new Date(a.releasedAt).getTime())
+
+  normalizedPackage.versions = versions
 
   // Normalize updated date
   if (normalizedPackage.versions.length === 0) {
