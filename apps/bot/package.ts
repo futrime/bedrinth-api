@@ -22,11 +22,11 @@ export function normalizePackage (pkg: Package): Package {
     ...pkg
   }
 
-  // Deduplicate tags
-  normalizedPackage.tags = [...new Set(pkg.tags)]
-
   // Replace tags
   normalizedPackage.tags = normalizedPackage.tags.map(tag => TAG_REPLACEMENTS[tag] ?? tag)
+
+  // Deduplicate tags
+  normalizedPackage.tags = [...new Set(pkg.tags)]
 
   // Deduplicate versions
   normalizedPackage.versions = [...new Map(pkg.versions.map(item => [item.version, item])).values()]
