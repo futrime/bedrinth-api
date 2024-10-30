@@ -25,6 +25,9 @@ export function normalizePackage (pkg: Package): Package {
   // Deduplicate tags
   normalizedPackage.tags = [...new Set(pkg.tags)]
 
+  // Replace tags
+  normalizedPackage.tags = normalizedPackage.tags.map(tag => TAG_REPLACEMENTS[tag] ?? tag)
+
   // Deduplicate versions
   normalizedPackage.versions = [...new Map(pkg.versions.map(item => [item.version, item])).values()]
 
@@ -46,4 +49,13 @@ export function normalizePackage (pkg: Package): Package {
   normalizedPackage.updated = normalizedPackage.versions[0].releasedAt
 
   return normalizedPackage
+}
+
+const TAG_REPLACEMENTS: Record<string, string> = {
+  endstone: 'platform:endstone',
+  levilamina: 'platform:levilamina',
+  mod: 'type:mod',
+  modpack: 'type:modpack',
+  addon: 'type:addon',
+  world: 'type:world',
 }
