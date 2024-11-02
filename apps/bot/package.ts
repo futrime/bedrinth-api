@@ -62,5 +62,5 @@ const TAG_REPLACEMENTS: Record<string, string> = {
   plugin: 'type:mod',
   modpack: 'type:modpack',
   addon: 'type:addon',
-  world: 'type:world',
+  world: 'type:world'
 }
