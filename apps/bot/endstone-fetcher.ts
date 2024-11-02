@@ -112,7 +112,7 @@ export class EndstoneFetcher extends GitHubFetcher {
       }
 
       const packageInfo: Package = {
-        packageManager: 'none',
+        packageManager: 'pip',
         source: 'github',
         identifier: `${repo.owner}/${repo.repo}`,
         name: projectMetadata.project.name,
