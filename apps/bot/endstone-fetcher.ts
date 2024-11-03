@@ -58,7 +58,7 @@ export class EndstoneFetcher extends GitHubFetcher {
       description: repository.description ?? '',
       author: repository.owner.login,
       tags: ['platform:endstone', 'type:mod', ...(repository.topics ?? [])],
-      avatarUrl: '',
+      avatarUrl: `https://avatars.githubusercontent.com/${repo.owner}`,
       hotness: repository.stargazers_count,
       updated: '', // Add when normalized
       versions
@@ -93,7 +93,7 @@ export class EndstoneFetcher extends GitHubFetcher {
         description: projectMetadata.project.description ?? '',
         author: repository.owner.login,
         tags: ['platform:endstone', 'type:mod', ...(projectMetadata.project.keywords ?? [])],
-        avatarUrl: '',
+        avatarUrl: `https://avatars.githubusercontent.com/${repo.owner}`,
         hotness: repository.stargazers_count,
         updated: '', // Add when normalized
         versions: releases.map(version => ({
@@ -119,7 +119,7 @@ export class EndstoneFetcher extends GitHubFetcher {
         description: projectMetadata.project.description ?? '',
         author: repository.owner.login,
         tags: ['platform:endstone', 'type:mod', ...(projectMetadata.project.keywords ?? [])],
-        avatarUrl: '',
+        avatarUrl: `https://avatars.githubusercontent.com/${repo.owner}`,
         hotness: repository.stargazers_count,
         updated: '', // Add when normalized
         versions
