@@ -40,6 +40,14 @@ export class LeviLaminaFetcher extends GitHubFetcher {
       throw new Error(`no versions found for github.com/${repo.owner}/${repo.repo}`)
     }
 
+    let avatarUrl = toothMetadata.info.avatar_url ?? `https://avatars.githubusercontent.com/${repo.owner}`
+
+    // Check if avatarUrl is relative and make it absolute if needed
+    if (!/^(?:[a-z+]+:)?\/\//i.test(avatarUrl)) {
+      // If relative, prepend the GitHub raw content URL
+      avatarUrl = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/HEAD/${avatarUrl}`
+    }
+
     const packageInfo: Package = {
       packageManager: 'lip',
       source: 'github',
@@ -48,7 +56,7 @@ export class LeviLaminaFetcher extends GitHubFetcher {
       description: toothMetadata.info.description,
       author: repo.owner,
       tags: ['platform:levilamina', ...toothMetadata.info.tags],
-      avatarUrl: '',
+      avatarUrl,
       hotness: repository.stargazers_count,
       updated: '', // Add when normalized
       versions
@@ -97,5 +105,6 @@ interface ToothMetadata {
     name: string
     description: string
     tags: string[]
+    avatar_url?: string
   }
 }

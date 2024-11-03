@@ -89,20 +89,46 @@ export class RedisClient implements DatabaseClient {
     if (q.length > 1) {
       const qList = q.replaceAll('*', ' ').split(' ').filter(item => item.length > 0)
 
-      for (const qItem of qList) {
+      // If the query starts with a plus, it is an exact match
+      const optionalQList = qList.filter(item => !item.startsWith('+'))
+      const exactQList = qList.filter(item => item.startsWith('+')).map(item => item.slice(1))
+
+      for (const qItem of exactQList) {
         if (/^[a-z0-9-]+:[a-z0-9-]+$/.test(qItem)) {
-          query = query.and(search => search
+          query = query.and(subQuery => subQuery
             .or('tags').contains(qItem)
           )
         } else {
           const pattern = `*${qItem}*`
-          query = query.and(search => search
+          query = query.and(subQuery => subQuery
             .or('name').matches(pattern)
             .or('description').matches(pattern)
             .or('author').matches(pattern)
             .or('tags').contains(pattern)
           )
         }
+      }
+
+      if (optionalQList.length > 0) {
+        query = query.and(subQuery => {
+          for (const qItem of optionalQList) {
+            if (/^[a-z0-9-]+:[a-z0-9-]+$/.test(qItem)) {
+              subQuery = subQuery.or(sub2Query => sub2Query
+                .or('tags').contains(qItem)
+              )
+            } else {
+              const pattern = `*${qItem}*`
+              subQuery = subQuery.or(sub2Query => sub2Query
+                .or('name').matches(pattern)
+                .or('description').matches(pattern)
+                .or('author').matches(pattern)
+                .or('tags').contains(pattern)
+              )
+            }
+          }
+
+          return subQuery
+        })
       }
     }
 
