@@ -1,16 +1,18 @@
 import consola from 'consola'
-import { Package, Version, normalizePackage } from './package.js'
+import { Package, Contributor, Version, normalizePackage } from './package.js'
 import { GitHubFetcher, RepositoryDescriptor } from './github-fetcher.js'
 
 export class LeviLaminaFetcher extends GitHubFetcher {
   public async * fetch (): AsyncGenerator<Package> {
     consola.debug('Fetching LeviLamina packages')
 
+    // Just a magic string to search for tooth.json files
     const query = 'path:/+filename:tooth.json+"format_version"+2+"tooth"+"version"+"info"+"name"+"description"+"author"+"tags"+"github.com/LiteLDev/LeviLamina"'
 
     for await (const repo of this.searchForRepositories(query)) {
+      // Skip LeviLamina itself
       if (repo.owner === 'LiteLDev' && repo.repo === 'LeviLamina') {
-        continue // Skip LeviLamina itself
+        continue
       }
 
       try {
@@ -30,11 +32,19 @@ export class LeviLaminaFetcher extends GitHubFetcher {
   private async fetchPackage (repo: RepositoryDescriptor): Promise<Package> {
     consola.debug(`Fetching LeviLamina package github.com/${repo.owner}/${repo.repo}`)
 
-    const repositoryPromise = this.fetchRepository(repo)
-    const toothMetadataPromise = this.fetchToothMetadata(repo)
-    const versionsPromise = this.fetchVersionsFromGoproxy(repo)
+    const [repository, repositoryContributors, toothMetadata, versions, xmakeLuaResp] = await Promise.all([
+      this.fetchRepository(repo),
+      this.fetchRepositoryContributors(repo),
+      this.fetchToothMetadata(repo),
+      this.fetchVersionsFromGoproxy(repo),
+      fetch(`https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/HEAD/xmake.lua`)
+    ])
 
-    const [repository, toothMetadata, versions] = await Promise.all([repositoryPromise, toothMetadataPromise, versionsPromise])
+    const contributors: Contributor[] = repositoryContributors.map<Contributor>(contributor => ({
+      username: contributor.login ?? '',
+      avatarUrl: contributor.avatar_url,
+      contributions: contributor.contributions
+    }))
 
     if (versions.length === 0) {
       throw new Error(`no versions found for github.com/${repo.owner}/${repo.repo}`)
@@ -49,16 +59,20 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     }
 
     const packageInfo: Package = {
-      packageManager: 'lip',
-      source: 'github',
-      identifier: `${repo.owner}/${repo.repo}`,
+      identifier: `github.com/${repo.owner}/${repo.repo}`,
       name: toothMetadata.info.name,
       description: toothMetadata.info.description,
       author: repo.owner,
-      tags: ['platform:levilamina', ...toothMetadata.info.tags],
+      tags: [
+        'platform:levilamina',
+        ...(xmakeLuaResp.ok ? ['type:mod'] : []),
+        ...toothMetadata.info.tags,
+        ...(repository.topics ?? [])
+      ],
       avatarUrl,
       hotness: repository.stargazers_count,
       updated: '', // Add when normalized
+      contributors,
       versions
     }
 
@@ -95,7 +109,9 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     const jsonList = await Promise.all(jsonPromiseList)
     return jsonList.map(json => ({
       version: (json as { Version: string }).Version.replace(/^v/, '').replace(/\+incompatible/g, ''),
-      releasedAt: new Date((json as { Time: string }).Time).toISOString()
+      releasedAt: new Date((json as { Time: string }).Time).toISOString(),
+      source: 'github',
+      packageManager: 'lip'
     }))
   }
 }

@@ -1,6 +1,4 @@
 export interface Package {
-  packageManager: string
-  source: string
   identifier: string
   name: string
   description: string
@@ -9,12 +7,21 @@ export interface Package {
   avatarUrl: string
   hotness: number
   updated: string
+  contributors: Contributor[]
   versions: Version[]
+}
+
+export interface Contributor {
+  username: string
+  avatarUrl?: string
+  contributions: number
 }
 
 export interface Version {
   version: string
   releasedAt: string
+  source: string
+  packageManager: string
 }
 
 export function normalizePackage (pkg: Package): Package {
@@ -29,6 +36,16 @@ export function normalizePackage (pkg: Package): Package {
   tags = [...new Set(tags)]
 
   normalizedPackage.tags = tags
+
+  let contributors = pkg.contributors
+
+  // Remove contributors without username
+  contributors = contributors.filter(contributor => contributor.username !== '')
+
+  // Sort contributors by contributions
+  contributors = contributors.sort((a, b) => b.contributions - a.contributions)
+
+  normalizedPackage.contributors = contributors
 
   // Deduplicate versions
   let versions = [...new Map(pkg.versions.map(item => [item.version, item])).values()]

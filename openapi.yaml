@@ -1,7 +1,7 @@
-openapi: 3.0.0
+openapi: "3.0.0"
 info:
-  title: bedrinth API
-  version: 2.0.0
+  title: bedrinth-api
+  version: "0.3"
 security: []
 paths:
   /packages:
@@ -120,9 +120,22 @@ paths:
                               type: string
                             releasedAt:
                               type: string
+                            source:
+                              type: string
+                              enum:
+                                - github
+                                - pypi
+                            packageManager:
+                              type: string
+                              enum:
+                                - lip
+                                - pip
+                              nullable: true
                           required:
                             - version
                             - releasedAt
+                            - source
+                            - packageManager
                     required:
                       - versions
                 required:
@@ -163,16 +176,6 @@ components:
     PackageInfo:
       type: object
       properties:
-        packageManager:
-          type: string
-          enum:
-            - lip
-            - pip
-        source:
-          type: string
-          enum:
-            - github
-            - pypi
         identifier:
           type: string
         name:
@@ -193,8 +196,6 @@ components:
         updated:
           type: string
       required:
-        - packageManager
-        - source
         - identifier
         - name
         - description

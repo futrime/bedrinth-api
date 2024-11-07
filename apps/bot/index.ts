@@ -1,7 +1,9 @@
 import 'dotenv/config'
 import consola from 'consola'
-import { EndstoneFetcher } from './endstone-fetcher.js'
+import { EndstoneCppFetcher } from './endstone-cpp-fetcher.js'
+import { EndstonePythonFetcher } from './endstone-python-fetcher.js'
 import { LeviLaminaFetcher } from './levilamina-fetcher.js'
+import { PackageFetcher } from './package-fetcher.js'
 import { RedisClient } from './redis-client.js'
 
 interface Config {
@@ -23,8 +25,9 @@ async function main (): Promise<void> {
 
   consola.level = config.logLevel
 
-  const fetchers = [
-    new EndstoneFetcher(config.githubToken),
+  const fetchers: PackageFetcher[] = [
+    new EndstoneCppFetcher(config.githubToken),
+    new EndstonePythonFetcher(config.githubToken),
     new LeviLaminaFetcher(config.githubToken)
   ]
 
@@ -32,12 +35,12 @@ async function main (): Promise<void> {
   await redisClient.connect()
 
   async function fetchAndSave (): Promise<void> {
-    for (const fetcher of fetchers) {
+    await Promise.all(fetchers.map(async (fetcher) => {
       for await (const packageInfo of fetcher.fetch()) {
         await redisClient.save(packageInfo, config.expiration)
-        consola.log(`Fetched ${packageInfo.source}:${packageInfo.identifier}`)
+        consola.log(`Fetched ${packageInfo.identifier}`)
       }
-    }
+    }))
   }
 
   // Initial fetch
@@ -48,7 +51,7 @@ async function main (): Promise<void> {
     (async () => {
       await fetchAndSave()
     })().catch((error) => {
-      consola.error('Error fetching and saving packages:', error)
+      consola.error('Error fetching and saving packages: ', error)
     })
   }, config.fetchInterval * 1000)
 }

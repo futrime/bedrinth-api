@@ -20,6 +20,16 @@ export abstract class GitHubFetcher implements PackageFetcher {
     return response.data
   }
 
+  protected async fetchRepositoryContributors (repo: RepositoryDescriptor): Promise<RepositoryContributor[]> {
+    const response = await this.octokit.rest.repos.listContributors({ owner: repo.owner, repo: repo.repo })
+    return response.data
+  }
+
+  protected async fetchRepositoryVersions (repo: RepositoryDescriptor): Promise<RepositoryVersion[]> {
+    const releases = await this.octokit.rest.repos.listReleases({ owner: repo.owner, repo: repo.repo })
+    return releases.data
+  }
+
   protected async * searchForRepositories (query: string): AsyncGenerator<RepositoryDescriptor> {
     let page = 1
     let hasMore = true
@@ -45,6 +55,11 @@ export abstract class GitHubFetcher implements PackageFetcher {
   }
 }
 
+export interface RepositoryDescriptor {
+  owner: string
+  repo: string
+}
+
 export interface Repository {
   name: string
   full_name: string
@@ -56,7 +71,14 @@ export interface Repository {
   topics?: string[]
 }
 
-export interface RepositoryDescriptor {
-  owner: string
-  repo: string
+export interface RepositoryContributor {
+  login?: string
+  avatar_url?: string
+  contributions: number
+}
+
+export interface RepositoryVersion {
+  tag_name: string
+  created_at: string
+  published_at: string | null
 }

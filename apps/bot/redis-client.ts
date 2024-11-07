@@ -5,8 +5,6 @@ import { Package } from './package.js'
 import consola from 'consola'
 
 const schema = new Schema('package', {
-  packageManager: { type: 'string' },
-  source: { type: 'string' },
   identifier: { type: 'string' },
   name: { type: 'text' },
   description: { type: 'text' },
@@ -16,7 +14,9 @@ const schema = new Schema('package', {
   hotness: { type: 'number', sortable: true },
   updated: { type: 'string' },
   versions_version: { type: 'string[]', path: '$.versions[*].version' },
-  versions_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' }
+  versions_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' },
+  versions_source: { type: 'string[]', path: '$.versions[*].source' },
+  versions_packageManager: { type: 'string[]', path: '$.versions[*].packageManager' }
 })
 
 const reconnectTimeout = 500
@@ -48,12 +48,7 @@ export class RedisClient implements DatabaseClient {
   }
 
   async save (pkg: Package, expiration: number): Promise<void> {
-    const entityId = `${pkg.source}:${pkg.identifier}`
-    const entityData = {
-      ...pkg
-    }
-
-    await this.repository.save(entityId, entityData)
-    await this.repository.expire(entityId, expiration)
+    await this.repository.save(pkg.identifier, pkg)
+    await this.repository.expire(pkg.identifier, expiration)
   }
 }
