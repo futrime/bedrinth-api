@@ -1,6 +1,4 @@
 export interface Package {
-  packageManager: string
-  source: string
   identifier: string
   name: string
   description: string
@@ -9,10 +7,18 @@ export interface Package {
   avatarUrl: string
   hotness: number
   updated: string
-  versions: Release[]
+  contributors: Contributor[]
+  versions: Version[]
 }
 
-export interface Release {
+export interface Contributor {
+  username: string
+  contributions: number
+}
+
+export interface Version {
   version: string
   releasedAt: string
+  source: string
+  packageManager: string
 }

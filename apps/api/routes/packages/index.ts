@@ -2,6 +2,7 @@ import express from 'express'
 import qs from 'qs'
 import createHttpError from 'http-errors'
 import { RedisClient } from '../../redis-client.js'
+import { router as identifierRouter } from './[identifier]/index.js'
 
 interface Params {
   q: string
@@ -60,8 +61,6 @@ router.get('/', (async (req, res, next) => {
         pageIndex: params.page,
         totalPages: packages.pageCount,
         items: packages.packages.map((pkg) => ({
-          packageManager: pkg.packageManager,
-          source: pkg.source,
           identifier: pkg.identifier,
           name: pkg.name,
           description: pkg.description,
@@ -77,3 +76,9 @@ router.get('/', (async (req, res, next) => {
     next(error)
   }
 }) as express.RequestHandler)
+
+router.use('/:identifier(*)', (req, res, next) => {
+  const { identifier } = req.params
+  req.app.locals.identifier = identifier
+  identifierRouter(req, res, next)
+})

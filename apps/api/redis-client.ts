@@ -5,8 +5,6 @@ import { Package } from './package.js'
 import consola from 'consola'
 
 const schema = new Schema('package', {
-  packageManager: { type: 'string' },
-  source: { type: 'string' },
   identifier: { type: 'string' },
   name: { type: 'text' },
   description: { type: 'text' },
@@ -15,8 +13,12 @@ const schema = new Schema('package', {
   avatarUrl: { type: 'string' },
   hotness: { type: 'number', sortable: true },
   updated: { type: 'string' },
+  contributors_username: { type: 'string[]', path: '$.contributors[*].username' },
+  contributors_contributions: { type: 'number[]', path: '$.contributors[*].contributions' },
   versions_version: { type: 'string[]', path: '$.versions[*].version' },
-  versions_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' }
+  versions_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' },
+  versions_source: { type: 'string[]', path: '$.versions[*].source' },
+  versions_packageManager: { type: 'string[]', path: '$.versions[*].packageManager' }
 })
 
 export class RedisClient implements DatabaseClient {
@@ -45,30 +47,15 @@ export class RedisClient implements DatabaseClient {
     await this.client.quit()
   }
 
-  async fetch (source: string, identifier: string): Promise<Package | undefined> {
-    const key = `${source}:${identifier}`
-    const entity = await this.repository.fetch(key)
+  async fetch (identifier: string): Promise<Package | undefined> {
+    const entity = await this.repository.fetch(identifier)
 
+    // Check if the entity is an empty entity
     if (entity.identifier === undefined) {
       return undefined
     }
 
-    return {
-      packageManager: entity.packageManager,
-      source: entity.source,
-      identifier: entity.identifier,
-      name: entity.name,
-      description: entity.description,
-      author: entity.author,
-      tags: entity.tags,
-      avatarUrl: entity.avatarUrl,
-      hotness: entity.hotness,
-      updated: entity.updated,
-      versions: entity.versions.map((release: { version: string, releasedAt: string }) => ({
-        version: release.version,
-        releasedAt: release.releasedAt
-      }))
-    }
+    return entity as Package
   }
 
   async search (q: string, perPage: number, page: number, sort: 'hotness' | 'updated', order: 'asc' | 'desc'): Promise<{ packages: Package[], pageCount: number }> {
@@ -137,22 +124,7 @@ export class RedisClient implements DatabaseClient {
     const entities = await query.sortBy(sortFieldMap[sort], sortOrderMap[order] as 'ASC' | 'DESC').return.page(offset, perPage)
 
     return {
-      packages: entities.map((entity: any) => ({
-        packageManager: entity.packageManager,
-        source: entity.source,
-        identifier: entity.identifier,
-        name: entity.name,
-        description: entity.description,
-        author: entity.author,
-        tags: entity.tags,
-        avatarUrl: entity.avatarUrl,
-        hotness: entity.hotness,
-        updated: entity.updated,
-        versions: entity.versions.map((release: { version: string, releasedAt: string }) => ({
-          version: release.version,
-          releasedAt: release.releasedAt
-        }))
-      })),
+      packages: entities as Package[],
       pageCount
     }
   }

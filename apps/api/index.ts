@@ -6,7 +6,6 @@ import createHttpError from 'http-errors'
 import morgan from 'morgan'
 import { RedisClient } from './redis-client.js'
 import { router as packagesRouter } from './routes/packages/index.js'
-import { router as getPackageRouter } from './routes/packages/source/identifier/index.js'
 
 interface Config {
   databaseUrl: string
@@ -50,18 +49,6 @@ async function main (): Promise<void> {
     next()
   })
 
-  app.use('/packages/:source/:owner/:repo', (req, res, next) => {
-    const { source, owner, repo } = req.params
-    req.app.locals.source = source
-    req.app.locals.identifier = `${owner}/${repo}`
-    getPackageRouter(req, res, next)
-  })
-  app.use('/packages/:source/:identifier', (req, res, next) => {
-    const { source, identifier } = req.params
-    req.app.locals.source = source
-    req.app.locals.identifier = identifier
-    getPackageRouter(req, res, next)
-  })
   app.use('/packages', packagesRouter)
 
   app.use(((err: Error, _, res, _next) => {

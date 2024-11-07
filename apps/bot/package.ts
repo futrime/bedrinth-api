@@ -34,6 +34,18 @@ export function normalizePackage (pkg: Package): Package {
   // Deduplicate tags
   tags = [...new Set(tags)]
 
+  // Sort tags:
+  // - For those matching ^[a-z0-9-]+:[a-z0-9-]+$, put them first
+  // - For either of matched and unmatched tags, sort lexicographically respectively
+  tags = tags.sort((a, b) => {
+    const aMatches = /^[a-z0-9-]+:[a-z0-9-]+$/.test(a)
+    const bMatches = /^[a-z0-9-]+:[a-z0-9-]+$/.test(b)
+
+    if (aMatches && !bMatches) return -1
+    if (!aMatches && bMatches) return 1
+    return a.localeCompare(b)
+  })
+
   normalizedPackage.tags = tags
 
   let contributors = pkg.contributors
