@@ -45,7 +45,7 @@ export class EndstonePythonFetcher extends GitHubFetcher {
       packageManager: 'pip'
     }))
 
-    if (pypiPackageMetadata !== null) {
+    if (pypiPackageMetadata !== undefined) {
       const pypiVersionStrings = Object.keys(pypiPackageMetadata.releases).filter(version => pypiPackageMetadata.releases[version].length > 0)
 
       const pypiVersions = pypiVersionStrings.map(version => ({
@@ -91,11 +91,11 @@ export class EndstonePythonFetcher extends GitHubFetcher {
     return toml.parse(data) as PythonProjectMetadata
   }
 
-  private async fetchPypiPackageMetadata (name: string): Promise<PypiPackageMetadata | null> {
+  private async fetchPypiPackageMetadata (name: string): Promise<PypiPackageMetadata | undefined> {
     const url = `https://pypi.org/pypi/${name}/json`
     const response = await fetch(url)
     if (!response.ok) {
-      return null
+      return undefined
     }
 
     return await response.json() as PypiPackageMetadata
@@ -111,14 +111,6 @@ interface PythonProjectMetadata {
 }
 
 interface PypiPackageMetadata {
-  info: {
-    author: string | null
-    author_email: string | null
-    keywords: string | null
-    name: string
-    summary: string
-    version: string
-  }
   releases: {
     [version: string]: Array<{
       upload_time_iso_8601: string
