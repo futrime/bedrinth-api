@@ -13,7 +13,6 @@ export interface Package {
 
 export interface Contributor {
   username: string
-  avatarUrl?: string
   contributions: number
 }
 

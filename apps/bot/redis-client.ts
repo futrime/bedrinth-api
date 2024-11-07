@@ -13,13 +13,13 @@ const schema = new Schema('package', {
   avatarUrl: { type: 'string' },
   hotness: { type: 'number', sortable: true },
   updated: { type: 'string' },
+  contributors_username: { type: 'string[]', path: '$.contributors[*].username' },
+  contributors_contributions: { type: 'number[]', path: '$.contributors[*].contributions' },
   versions_version: { type: 'string[]', path: '$.versions[*].version' },
   versions_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' },
   versions_source: { type: 'string[]', path: '$.versions[*].source' },
   versions_packageManager: { type: 'string[]', path: '$.versions[*].packageManager' }
 })
-
-const reconnectTimeout = 500
 
 export class RedisClient implements DatabaseClient {
   private readonly client: RedisClientType
@@ -29,7 +29,7 @@ export class RedisClient implements DatabaseClient {
     this.client = createClient({
       url,
       socket: {
-        reconnectStrategy: () => reconnectTimeout
+        reconnectStrategy: () => 500
       }
     })
     this.client.on('error', (err) => {

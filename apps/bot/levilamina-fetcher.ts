@@ -42,7 +42,6 @@ export class LeviLaminaFetcher extends GitHubFetcher {
 
     const contributors: Contributor[] = repositoryContributors.map<Contributor>(contributor => ({
       username: contributor.login ?? '',
-      avatarUrl: contributor.avatar_url,
       contributions: contributor.contributions
     }))
 

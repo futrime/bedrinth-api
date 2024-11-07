@@ -111,6 +111,18 @@ paths:
                   - "$ref": "#/components/schemas/PackageInfo"
                   - type: object
                     properties:
+                      contributors:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            username:
+                              type: string
+                            contributions:
+                              type: number
+                          required:
+                            - username
+                            - contributions
                       versions:
                         type: array
                         items:
@@ -137,6 +149,7 @@ paths:
                             - source
                             - packageManager
                     required:
+                      - contributors
                       - versions
                 required:
                   - apiVersion
