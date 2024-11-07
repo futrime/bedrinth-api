@@ -5,7 +5,7 @@
     "start-api": "cd apps/api && npm run start",
     "start-bot": "cd apps/bot && npm run start"
   },
-  "dependencies": {
+  "devDependencies": {
     "ts-standard": "^12.0.2"
   }
 }
