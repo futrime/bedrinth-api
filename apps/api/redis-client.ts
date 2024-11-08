@@ -48,12 +48,12 @@ export class RedisClient implements DatabaseClient {
     await this.client.quit()
   }
 
-  async fetch (identifier: string): Promise<Package | undefined> {
+  async fetch (identifier: string): Promise<Package | null> {
     const entity = await this.repository.fetch(identifier)
 
-    // Check if the entity is an empty entity
-    if (entity.identifier === undefined) {
-      return undefined
+    // Check if the entity is empty
+    if (Object.keys(entity).length === 0) {
+      return null
     }
 
     return entity as Package

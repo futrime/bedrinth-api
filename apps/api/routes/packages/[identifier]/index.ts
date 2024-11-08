@@ -11,7 +11,7 @@ router.get('/', (async (req, res, next) => {
 
   try {
     const packageData = await redisClient.fetch(identifier)
-    if (packageData === undefined) {
+    if (packageData === null) {
       throw new createHttpError.NotFound('package not found')
     }
 

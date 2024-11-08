@@ -12,7 +12,7 @@ export class EndstonePythonFetcher extends GitHubFetcher {
 
     for await (const repo of this.searchForRepositories(query)) {
       try {
-        const packageInfo = await this.fetchPythonPackage(repo)
+        const packageInfo = await this.fetchPackage(repo)
 
         yield packageInfo
       } catch (error) {
@@ -21,7 +21,7 @@ export class EndstonePythonFetcher extends GitHubFetcher {
     }
   }
 
-  private async fetchPythonPackage (repo: RepositoryDescriptor): Promise<Package> {
+  private async fetchPackage (repo: RepositoryDescriptor): Promise<Package> {
     consola.debug(`Fetching Endstone Python package github.com/${repo.owner}/${repo.repo}`)
 
     const [repository, repositoryContributors, repositoryVersions, pyprojectMetadata] = await Promise.all([
@@ -45,7 +45,7 @@ export class EndstonePythonFetcher extends GitHubFetcher {
       packageManager: 'pip'
     }))
 
-    if (pypiPackageMetadata !== undefined) {
+    if (pypiPackageMetadata !== null) {
       const pypiVersionStrings = Object.keys(pypiPackageMetadata.releases).filter(version => pypiPackageMetadata.releases[version].length > 0)
 
       const pypiVersions = pypiVersionStrings.map(version => ({
@@ -92,11 +92,11 @@ export class EndstonePythonFetcher extends GitHubFetcher {
     return toml.parse(data) as PythonProjectMetadata
   }
 
-  private async fetchPypiPackageMetadata (name: string): Promise<PypiPackageMetadata | undefined> {
+  private async fetchPypiPackageMetadata (name: string): Promise<PypiPackageMetadata | null> {
     const url = `https://pypi.org/pypi/${name}/json`
     const response = await fetch(url)
     if (!response.ok) {
-      return undefined
+      return null
     }
 
     return await response.json() as PypiPackageMetadata
