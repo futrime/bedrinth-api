@@ -1,9 +1,10 @@
-import 'dotenv/config'
 import consola from 'consola'
 import cors from 'cors'
+import 'dotenv/config'
 import express from 'express'
 import createHttpError from 'http-errors'
 import morgan from 'morgan'
+import { apiVersion } from './api-version.js'
 import { RedisClient } from './redis-client.js'
 import { router as packagesRouter } from './routes/packages/index.js'
 
@@ -14,14 +15,14 @@ interface Config {
 }
 
 interface ErrorResponse {
-  apiVersion: '2.0.0'
+  apiVersion: string
   error: { code: number, message: string }
 }
 
 function createErrorResponse (
   code: number, message: string): ErrorResponse {
   return {
-    apiVersion: '2.0.0',
+    apiVersion,
     error: { code, message }
   }
 }

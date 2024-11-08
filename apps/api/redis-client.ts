@@ -1,8 +1,8 @@
+import consola from 'consola'
 import { createClient, RedisClientType } from 'redis'
-import { Schema, Repository } from 'redis-om'
+import { Repository, Schema } from 'redis-om'
 import { DatabaseClient } from './database-client.js'
 import { Package } from './package.js'
-import consola from 'consola'
 
 const schema = new Schema('package', {
   identifier: { type: 'string' },
@@ -11,6 +11,7 @@ const schema = new Schema('package', {
   author: { type: 'text' },
   tags: { type: 'string[]' },
   avatarUrl: { type: 'string' },
+  projectUrl: { type: 'string' },
   hotness: { type: 'number', sortable: true },
   updated: { type: 'string' },
   contributors_username: { type: 'string[]', path: '$.contributors[*].username' },

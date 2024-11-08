@@ -11,6 +11,7 @@ const schema = new Schema('package', {
   author: { type: 'text' },
   tags: { type: 'string[]' },
   avatarUrl: { type: 'string' },
+  projectUrl: { type: 'string' },
   hotness: { type: 'number', sortable: true },
   updated: { type: 'string' },
   contributors_username: { type: 'string[]', path: '$.contributors[*].username' },

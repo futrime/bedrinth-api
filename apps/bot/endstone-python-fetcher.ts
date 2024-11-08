@@ -74,6 +74,7 @@ export class EndstonePythonFetcher extends GitHubFetcher {
         ...(repository.topics ?? [])
       ],
       avatarUrl: `https://avatars.githubusercontent.com/${repo.owner}`,
+      projectUrl: `https://github.com/${repo.owner}/${repo.repo}`,
       hotness: repository.stargazers_count,
       updated: '', // Add when normalized
       contributors,

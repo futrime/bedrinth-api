@@ -1,6 +1,7 @@
 import express from 'express'
-import qs from 'qs'
 import createHttpError from 'http-errors'
+import qs from 'qs'
+import { apiVersion } from '../../api-version.js'
 import { RedisClient } from '../../redis-client.js'
 import { router as identifierRouter } from './[identifier]/index.js'
 
@@ -56,7 +57,7 @@ router.get('/', (async (req, res, next) => {
     const packages = await redisClient.search(params.q, params.perPage, params.page, params.sort, params.order)
 
     res.json({
-      apiVersion: '2.0.0',
+      apiVersion,
       data: {
         pageIndex: params.page,
         totalPages: packages.pageCount,
@@ -67,6 +68,7 @@ router.get('/', (async (req, res, next) => {
           author: pkg.author,
           tags: pkg.tags,
           avatarUrl: pkg.avatarUrl,
+          projectUrl: pkg.projectUrl,
           hotness: pkg.hotness,
           updated: pkg.updated
         }))

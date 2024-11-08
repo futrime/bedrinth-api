@@ -1,5 +1,6 @@
 import express from 'express'
 import createHttpError from 'http-errors'
+import { apiVersion } from '../../../api-version.js'
 import { RedisClient } from '../../../redis-client.js'
 
 export const router = express.Router()
@@ -15,7 +16,7 @@ router.get('/', (async (req, res, next) => {
     }
 
     res.json({
-      apiVersion: '2.0.0',
+      apiVersion,
       data: packageData
     })
   } catch (error) {

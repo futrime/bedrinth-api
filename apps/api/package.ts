@@ -5,6 +5,7 @@ export interface Package {
   author: string
   tags: string[]
   avatarUrl: string
+  projectUrl: string
   hotness: number
   updated: string
   contributors: Contributor[]

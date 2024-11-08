@@ -69,6 +69,7 @@ export class LeviLaminaFetcher extends GitHubFetcher {
         ...(repository.topics ?? [])
       ],
       avatarUrl,
+      projectUrl: `https://github.com/${repo.owner}/${repo.repo}`,
       hotness: repository.stargazers_count,
       updated: '', // Add when normalized
       contributors,
