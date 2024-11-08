@@ -1,6 +1,6 @@
 import consola from 'consola'
-import { Package, Contributor, Version, normalizePackage } from './package.js'
-import { GitHubFetcher, RepositoryDescriptor } from './github-fetcher.js'
+import { GitHubFetcher, RepoId } from './github-fetcher.js'
+import { Contributor, Package, Version, normalizePackage } from './package.js'
 
 export class EndstoneCppFetcher extends GitHubFetcher {
   public async * fetch (): AsyncGenerator<Package> {
@@ -9,7 +9,7 @@ export class EndstoneCppFetcher extends GitHubFetcher {
     // Just a magic string to search for CMakeLists.txt files with endstone_add_plugin
     const query = 'path:/+filename:CMakeLists.txt+endstone_add_plugin'
 
-    for await (const repo of this.searchForRepositories(query)) {
+    for await (const repo of this.searchForRepo(query)) {
       try {
         const packageInfo = await this.fetchPackage(repo)
 
@@ -17,18 +17,20 @@ export class EndstoneCppFetcher extends GitHubFetcher {
           yield packageInfo
         }
       } catch (error) {
-        consola.error(`Error fetching Endstone C++ package github.com/${repo.owner}/${repo.repo}:`, error)
+        consola.error(`Failed to fetch package ${repo.owner}/${repo.repo}:`, error)
       }
     }
+
+    consola.success('Done fetching Endstone C++ packages')
   }
 
-  private async fetchPackage (repo: RepositoryDescriptor): Promise<Package | null> {
-    consola.debug(`Fetching Endstone C++ package github.com/${repo.owner}/${repo.repo}`)
+  private async fetchPackage (repo: RepoId): Promise<Package | null> {
+    consola.debug(`EndstoneCppFetcher.fetchPackage(${repo.owner}/${repo.repo})`)
 
     const [repository, repositoryContributors, repositoryVersions] = await Promise.all([
-      this.fetchRepository(repo),
-      this.fetchRepositoryContributors(repo),
-      this.fetchRepositoryVersions(repo)
+      this.getRepo(repo),
+      this.listRepoContributors(repo),
+      this.listRepoReleases(repo)
     ])
 
     const contributors: Contributor[] = repositoryContributors.map<Contributor>(contributor => ({
@@ -36,14 +38,39 @@ export class EndstoneCppFetcher extends GitHubFetcher {
       contributions: contributor.contributions
     }))
 
-    const versions: Version[] = repositoryVersions.map(version => ({
-      version: version.tag_name,
-      releasedAt: new Date(version.published_at ?? version.created_at).toISOString(),
-      source: 'github',
-      packageManager: ''
-    }))
+    const versions: Version[] = []
+
+    for (const version of repositoryVersions) {
+      consola.debug(`EndstoneCppFetcher.fetchPackage(${repo.owner}/${repo.repo}) (version=${version.tag_name})`)
+
+      try {
+        const cmakeListsTxtUrl = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/${version.tag_name}/CMakeLists.txt`
+        const cmakeListsTxtResp = await fetch(cmakeListsTxtUrl)
+        if (!cmakeListsTxtResp.ok) {
+          consola.warn(`Failed to fetch CMakeLists.txt file in ${repo.owner}/${repo.repo} for version ${version.tag_name}`)
+          continue
+        }
+
+        const cmakeListsTxt = await cmakeListsTxtResp.text()
+
+        const match = /FetchContent_Declare\(\s+endstone\s+GIT_REPOSITORY\s+https:\/\/github\.com\/EndstoneMC\/endstone\.git\s+GIT_TAG\s+(\S+)\s+\)/m.exec(cmakeListsTxt)
+
+        const platformVersionRequirement = (match !== null) ? match[1] : ''
+
+        versions.push({
+          version: version.tag_name,
+          releasedAt: new Date(version.published_at ?? version.created_at).toISOString(),
+          source: 'github',
+          packageManager: '',
+          platformVersionRequirement
+        })
+      } catch (error) {
+        consola.error(`Failed to fetch version ${version.tag_name} for package ${repo.owner}/${repo.repo}:`, error)
+      }
+    }
 
     if (versions.length === 0) {
+      consola.warn(`No versions found for package ${repo.owner}/${repo.repo}`)
       return null
     }
 

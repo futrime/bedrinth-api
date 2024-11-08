@@ -22,4 +22,5 @@ export interface Version {
   releasedAt: string
   source: string
   packageManager: string
+  platformVersionRequirement: string
 }

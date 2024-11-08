@@ -1,9 +1,6 @@
 import consola from 'consola'
-import fetchBuilder from 'fetch-retry'
-import { GitHubFetcher, RepositoryDescriptor } from './github-fetcher.js'
+import { GitHubFetcher, RepoId } from './github-fetcher.js'
 import { Contributor, Package, Version, normalizePackage } from './package.js'
-
-const fetch = fetchBuilder(global.fetch)
 
 export class LeviLaminaFetcher extends GitHubFetcher {
   public async * fetch (): AsyncGenerator<Package> {
@@ -12,7 +9,7 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     // Just a magic string to search for tooth.json files
     const query = 'path:/+filename:tooth.json+"format_version"+2+"tooth"+"version"+"info"+"name"+"description"+"author"+"tags"+"github.com/LiteLDev/LeviLamina"'
 
-    for await (const repo of this.searchForRepositories(query)) {
+    for await (const repo of this.searchForRepo(query)) {
       // Skip LeviLamina itself
       if (repo.owner === 'LiteLDev' && repo.repo === 'LeviLamina') {
         continue
@@ -25,36 +22,37 @@ export class LeviLaminaFetcher extends GitHubFetcher {
           yield packageInfo
         }
       } catch (error) {
-        consola.error(`Error fetching LeviLamina package github.com/${repo.owner}/${repo.repo}:`, error)
+        consola.error(`Failed to fetch package ${repo.owner}/${repo.repo}:`, error)
       }
     }
+
+    consola.success('Done fetching LeviLamina packages')
   }
 
   private escapeForGoProxy (s: string): string {
     return s.replace(/([A-Z])/g, (match) => `!${match.toLowerCase()}`)
   }
 
-  private async fetchPackage (repo: RepositoryDescriptor): Promise<Package | null> {
-    consola.debug(`Fetching LeviLamina package github.com/${repo.owner}/${repo.repo}`)
+  private async fetchPackage (repo: RepoId): Promise<Package | null> {
+    consola.debug(`LeviLaminaFetcher.fetchPackage(${repo.owner}/${repo.repo})`)
 
-    const [repository, repositoryContributors, toothMetadata, versions, xmakeLuaResp] = await Promise.all([
-      this.fetchRepository(repo),
-      this.fetchRepositoryContributors(repo),
-      this.fetchToothMetadata(repo),
-      this.fetchVersionsFromGoproxy(repo),
-      fetch(`https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/HEAD/xmake.lua`)
+    const [repository, repositoryContributors, tooth, versions] = await Promise.all([
+      this.getRepo(repo),
+      this.listRepoContributors(repo),
+      this.fetchTooth(repo, 'HEAD'),
+      this.fetchVersions(repo)
     ])
 
-    const contributors: Contributor[] = repositoryContributors.map<Contributor>(contributor => ({
-      username: contributor.login ?? '',
-      contributions: contributor.contributions
-    }))
-
-    if (versions.length === 0) {
+    if (tooth === null) {
       return null
     }
 
-    let avatarUrl = toothMetadata.info.avatar_url ?? `https://avatars.githubusercontent.com/${repo.owner}`
+    if (versions.length === 0) {
+      consola.warn(`No versions found for package ${repo.owner}/${repo.repo}`)
+      return null
+    }
+
+    let avatarUrl = tooth.info.avatar_url ?? `https://avatars.githubusercontent.com/${repo.owner}`
 
     // Check if avatarUrl is relative and make it absolute if needed
     if (!/^(?:[a-z+]+:)?\/\//i.test(avatarUrl)) {
@@ -62,15 +60,19 @@ export class LeviLaminaFetcher extends GitHubFetcher {
       avatarUrl = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/HEAD/${avatarUrl}`
     }
 
+    const contributors: Contributor[] = repositoryContributors.map<Contributor>(contributor => ({
+      username: contributor.login ?? '',
+      contributions: contributor.contributions
+    }))
+
     const packageInfo: Package = {
       identifier: `github.com/${repo.owner}/${repo.repo}`,
-      name: toothMetadata.info.name,
-      description: toothMetadata.info.description,
+      name: tooth.info.name,
+      description: tooth.info.description,
       author: repo.owner,
       tags: [
         'platform:levilamina',
-        ...(xmakeLuaResp.ok ? ['type:mod'] : []),
-        ...toothMetadata.info.tags,
+        ...tooth.info.tags,
         ...(repository.topics ?? [])
       ],
       avatarUrl,
@@ -85,52 +87,90 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     return normalizedPackage
   }
 
-  private async fetchToothMetadata (repo: RepositoryDescriptor): Promise<ToothMetadata> {
-    consola.debug(`Fetching tooth metadata for LeviLamina package github.com/${repo.owner}/${repo.repo}`)
-
-    const url = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/HEAD/tooth.json`
-    const response = await fetch(url)
-    const data = await response.json()
-    return data as ToothMetadata
-  }
-
-  private async fetchVersionsFromGoproxy (repo: RepositoryDescriptor): Promise<Version[]> {
-    consola.debug(`Fetching versions for github.com/${repo.owner}/${repo.repo}`)
+  private async fetchVersions (repo: RepoId): Promise<Version[]> {
+    consola.debug(`LeviLaminaFetcher.fetchVersions(${repo.owner}/${repo.repo})`)
 
     const url = `https://goproxy.io/github.com/${this.escapeForGoProxy(repo.owner)}/${this.escapeForGoProxy(repo.repo)}/@v/list`
     const response = await fetch(url)
     const text = await response.text()
-    const versionStrList = text.split('\n').map(line => line.trim()).filter(line => line.length > 0).map(line => line.replace(/^v/, ''))
+    const goproxyVersionStrList = text.split('\n').map(line => line.trim()).filter(line => line.length > 0)
 
     const versionList: Version[] = []
-    for (const version of versionStrList) {
-      const url = `https://goproxy.io/github.com/${this.escapeForGoProxy(repo.owner)}/${this.escapeForGoProxy(repo.repo)}/@v/v${version}.info`
-
-      const response = await fetch(url)
+    for (const goproxyVersionStr of goproxyVersionStrList) {
+      consola.debug(`LeviLaminaFetcher.fetchVersions(${repo.owner}/${repo.repo}) (goproxyVersionStr=${goproxyVersionStr})`)
 
       try {
-        const json = (await response.json()) as { Version: string, Time: string }
+        const versionStr = goproxyVersionStr.replace(/^v/, '').replace(/\+incompatible/g, '')
+
+        const [goproxyResp, toothResp] = await Promise.all([
+          this.fetchGoProxyVersion(repo, goproxyVersionStr),
+          this.fetchTooth(repo, `v${versionStr}`)
+        ])
+
+        if (goproxyResp === null || toothResp === null) {
+          continue
+        }
 
         versionList.push({
-          version: json.Version.replace(/^v/, '').replace(/\+incompatible/g, ''),
-          releasedAt: new Date(json.Time).toISOString(),
+          version: versionStr,
+          releasedAt: new Date(goproxyResp.Time).toISOString(),
           source: 'github',
-          packageManager: 'lip'
+          packageManager: 'lip',
+          platformVersionRequirement: toothResp.dependencies?.['github.com/LiteLDev/LeviLamina'] ?? toothResp.prerequisites?.['github.com/LiteLDev/LeviLamina'] ?? ''
         })
-      } catch {
-        // Ignore
+      } catch (error) {
+        consola.error(`Failed to fetch version ${goproxyVersionStr} for package ${repo.owner}/${repo.repo}:`, error)
       }
     }
 
     return versionList
   }
+
+  private async fetchGoProxyVersion (repo: RepoId, goproxyVersionStr: string): Promise<GoProxyVersion | null> {
+    consola.debug(`LeviLaminaFetcher.fetchGoProxyVersion(${repo.owner}/${repo.repo}, ${goproxyVersionStr})`)
+
+    const url = `https://goproxy.io/github.com/${this.escapeForGoProxy(repo.owner)}/${this.escapeForGoProxy(repo.repo)}/@v/${goproxyVersionStr}.info`
+    const response = await fetch(url)
+    if (!response.ok) {
+      consola.warn(`Failed to fetch GoProxy version ${goproxyVersionStr} for package ${repo.owner}/${repo.repo}`)
+      return null
+    }
+
+    const data = await response.json()
+    return data as GoProxyVersion
+  }
+
+  private async fetchTooth (repo: RepoId, ref: string): Promise<Tooth | null> {
+    consola.debug(`LeviLaminaFetcher.fetchTooth(${repo.owner}/${repo.repo}, ref=${ref})`)
+
+    const url = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/${ref}/tooth.json`
+    const response = await fetch(url)
+    if (!response.ok) {
+      consola.warn(`Failed to fetch tooth.json in ${repo.owner}/${repo.repo} at ref ${ref}`)
+      return null
+    }
+
+    const data = await response.json()
+    return data as Tooth
+  }
 }
 
-interface ToothMetadata {
+interface Tooth {
   info: {
     name: string
     description: string
     tags: string[]
     avatar_url?: string
   }
+  dependencies?: {
+    'github.com/LiteLDev/LeviLamina'?: string
+  }
+  prerequisites?: {
+    'github.com/LiteLDev/LeviLamina'?: string
+  }
+}
+
+interface GoProxyVersion {
+  Version: string
+  Time: string
 }

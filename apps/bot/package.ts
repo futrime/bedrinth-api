@@ -22,6 +22,7 @@ export interface Version {
   releasedAt: string
   source: string
   packageManager: string
+  platformVersionRequirement: string
 }
 
 export function normalizePackage (pkg: Package): Package {

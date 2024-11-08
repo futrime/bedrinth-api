@@ -1,5 +1,5 @@
-import 'dotenv/config'
 import consola from 'consola'
+import 'dotenv/config'
 import { EndstoneCppFetcher } from './endstone-cpp-fetcher.js'
 import { EndstonePythonFetcher } from './endstone-python-fetcher.js'
 import { LeviLaminaFetcher } from './levilamina-fetcher.js'
@@ -55,12 +55,12 @@ async function main (): Promise<void> {
     (async () => {
       await fetchAndSave()
     })().catch((error) => {
-      consola.error('Error fetching and saving packages: ', error)
+      consola.error(error)
     })
   }, config.fetchInterval * 1000)
 }
 
 main().catch((error) => {
-  consola.error('Unhandled error:', error)
+  consola.error(error)
   process.exit(1)
 })

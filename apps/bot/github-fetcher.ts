@@ -1,7 +1,7 @@
 import consola from 'consola'
 import { Octokit } from 'octokit'
-import { Package } from './package.js'
 import { PackageFetcher } from './package-fetcher.js'
+import { Package } from './package.js'
 
 export abstract class GitHubFetcher implements PackageFetcher {
   protected readonly octokit: Octokit
@@ -12,30 +12,34 @@ export abstract class GitHubFetcher implements PackageFetcher {
 
   public abstract fetch (): AsyncGenerator<Package>
 
-  protected async fetchRepository (repo: RepositoryDescriptor): Promise<Repository> {
-    consola.debug(`Fetching repository github.com/${repo.owner}/${repo.repo}`)
+  protected async getRepo (repo: RepoId): Promise<Repository> {
+    consola.debug(`GitHubFetcher.getRepo(${repo.owner}/${repo.repo})`)
 
     const response = await this.octokit.rest.repos.get({ owner: repo.owner, repo: repo.repo })
 
     return response.data
   }
 
-  protected async fetchRepositoryContributors (repo: RepositoryDescriptor): Promise<RepositoryContributor[]> {
+  protected async listRepoContributors (repo: RepoId): Promise<RepositoryContributor[]> {
+    consola.debug(`GitHubFetcher.listRepoContributors(${repo.owner}/${repo.repo})`)
+
     const response = await this.octokit.rest.repos.listContributors({ owner: repo.owner, repo: repo.repo })
     return response.data
   }
 
-  protected async fetchRepositoryVersions (repo: RepositoryDescriptor): Promise<RepositoryVersion[]> {
+  protected async listRepoReleases (repo: RepoId): Promise<RepositoryVersion[]> {
+    consola.debug(`GitHubFetcher.listRepoReleases(${repo.owner}/${repo.repo})`)
+
     const releases = await this.octokit.rest.repos.listReleases({ owner: repo.owner, repo: repo.repo })
     return releases.data
   }
 
-  protected async * searchForRepositories (query: string): AsyncGenerator<RepositoryDescriptor> {
+  protected async * searchForRepo (query: string): AsyncGenerator<RepoId> {
     let page = 1
     let hasMore = true
 
     while (hasMore) {
-      consola.debug(`Searching for repositories (page ${page})`)
+      consola.debug(`GitHubFetcher.searchForRepo(${query}) (page=${page})`)
 
       const response = await this.octokit.rest.search.code({
         q: query,
@@ -55,7 +59,7 @@ export abstract class GitHubFetcher implements PackageFetcher {
   }
 }
 
-export interface RepositoryDescriptor {
+export interface RepoId {
   owner: string
   repo: string
 }

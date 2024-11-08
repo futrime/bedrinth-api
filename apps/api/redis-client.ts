@@ -19,7 +19,8 @@ const schema = new Schema('package', {
   versions_version: { type: 'string[]', path: '$.versions[*].version' },
   versions_releasedAt: { type: 'string[]', path: '$.versions[*].releasedAt' },
   versions_source: { type: 'string[]', path: '$.versions[*].source' },
-  versions_packageManager: { type: 'string[]', path: '$.versions[*].packageManager' }
+  versions_packageManager: { type: 'string[]', path: '$.versions[*].packageManager' },
+  versions_platformVersionRequirement: { type: 'string[]', path: '$.versions[*].platformVersionRequirement' }
 })
 
 export class RedisClient implements DatabaseClient {

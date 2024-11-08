@@ -144,12 +144,14 @@ paths:
                               enum:
                                 - lip
                                 - pip
-                              nullable: true
+                            platformVersionRequirement:
+                              type: string
                           required:
                             - version
                             - releasedAt
                             - source
                             - packageManager
+                            - platformVersionRequirement
                     required:
                       - projectUrl
                       - contributors
