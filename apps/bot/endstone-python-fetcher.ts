@@ -1,11 +1,14 @@
 import consola from 'consola'
+import fetchBuilder from 'fetch-retry'
 import toml from 'toml'
-import { Package, Contributor, Version, normalizePackage } from './package.js'
 import { GitHubFetcher, RepositoryDescriptor } from './github-fetcher.js'
+import { Contributor, Package, Version, normalizePackage } from './package.js'
+
+const fetch = fetchBuilder(global.fetch)
 
 export class EndstonePythonFetcher extends GitHubFetcher {
   public async * fetch (): AsyncGenerator<Package> {
-    consola.debug('Fetching Endstone Python packages')
+    consola.start('Fetching Endstone Python packages...')
 
     // Just a magic string to search for pyproject.toml files with an entry point for endstone
     const query = 'path:/+filename:pyproject.toml+[project.entry-points."endstone"]'
@@ -14,14 +17,16 @@ export class EndstonePythonFetcher extends GitHubFetcher {
       try {
         const packageInfo = await this.fetchPackage(repo)
 
-        yield packageInfo
+        if (packageInfo !== null) {
+          yield packageInfo
+        }
       } catch (error) {
         consola.error(`Error fetching Endstone Python package github.com/${repo.owner}/${repo.repo}:`, error)
       }
     }
   }
 
-  private async fetchPackage (repo: RepositoryDescriptor): Promise<Package> {
+  private async fetchPackage (repo: RepositoryDescriptor): Promise<Package | null> {
     consola.debug(`Fetching Endstone Python package github.com/${repo.owner}/${repo.repo}`)
 
     const [repository, repositoryContributors, repositoryVersions, pyprojectMetadata] = await Promise.all([
@@ -59,7 +64,7 @@ export class EndstonePythonFetcher extends GitHubFetcher {
     }
 
     if (versions.length === 0) {
-      throw new Error(`no versions found for github.com/${repo.owner}/${repo.repo}`)
+      return null
     }
 
     const packageInfo: Package = {

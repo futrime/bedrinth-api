@@ -35,12 +35,16 @@ async function main (): Promise<void> {
   await redisClient.connect()
 
   async function fetchAndSave (): Promise<void> {
+    consola.start('Fetching and saving packages...')
+
     await Promise.all(fetchers.map(async (fetcher) => {
       for await (const packageInfo of fetcher.fetch()) {
         await redisClient.save(packageInfo, config.expiration)
-        consola.log(`Fetched ${packageInfo.identifier}`)
+        consola.log(`Fetched and saved ${packageInfo.identifier}`)
       }
     }))
+
+    consola.success('Done fetching and saving packages')
   }
 
   // Initial fetch

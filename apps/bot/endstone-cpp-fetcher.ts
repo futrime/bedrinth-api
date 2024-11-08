@@ -4,7 +4,7 @@ import { GitHubFetcher, RepositoryDescriptor } from './github-fetcher.js'
 
 export class EndstoneCppFetcher extends GitHubFetcher {
   public async * fetch (): AsyncGenerator<Package> {
-    consola.debug('Fetching Endstone C++ packages')
+    consola.start('Fetching Endstone C++ packages...')
 
     // Just a magic string to search for CMakeLists.txt files with endstone_add_plugin
     const query = 'path:/+filename:CMakeLists.txt+endstone_add_plugin'
@@ -13,14 +13,16 @@ export class EndstoneCppFetcher extends GitHubFetcher {
       try {
         const packageInfo = await this.fetchPackage(repo)
 
-        yield packageInfo
+        if (packageInfo !== null) {
+          yield packageInfo
+        }
       } catch (error) {
         consola.error(`Error fetching Endstone C++ package github.com/${repo.owner}/${repo.repo}:`, error)
       }
     }
   }
 
-  private async fetchPackage (repo: RepositoryDescriptor): Promise<Package> {
+  private async fetchPackage (repo: RepositoryDescriptor): Promise<Package | null> {
     consola.debug(`Fetching Endstone C++ package github.com/${repo.owner}/${repo.repo}`)
 
     const [repository, repositoryContributors, repositoryVersions] = await Promise.all([
@@ -42,7 +44,7 @@ export class EndstoneCppFetcher extends GitHubFetcher {
     }))
 
     if (versions.length === 0) {
-      throw new Error(`no versions found for github.com/${repo.owner}/${repo.repo}`)
+      return null
     }
 
     const packageInfo: Package = {
