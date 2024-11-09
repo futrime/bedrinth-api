@@ -48,16 +48,21 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     }
 
     if (versions.length === 0) {
-      consola.warn(`No versions found for package ${repo.owner}/${repo.repo}`)
+      consola.error(`No versions found for package ${repo.owner}/${repo.repo}`)
       return null
     }
 
     let avatarUrl = tooth.info.avatar_url ?? `https://avatars.githubusercontent.com/${repo.owner}`
 
     // Check if avatarUrl is relative and make it absolute if needed
-    if (!/^(?:[a-z+]+:)?\/\//i.test(avatarUrl)) {
-      // If relative, prepend the GitHub raw content URL
+    if (!/^(?:[a-z+]+:)?\//i.test(avatarUrl)) {
       avatarUrl = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/HEAD/${avatarUrl}`
+    }
+    // Check if avatarUrl starts with https://github.com/{owner}/{repo}/blob and convert it to raw.githubusercontent.com
+    const githubUrlRegex = /^https:\/\/github\.com\/([A-Za-z0-9-]+)\/([\w.-]+)\/blob\/(.+)/
+    const githubUrlRegexMatch = githubUrlRegex.exec(avatarUrl)
+    if (githubUrlRegexMatch !== null) {
+      avatarUrl = `https://raw.githubusercontent.com/${githubUrlRegexMatch[1]}/${githubUrlRegexMatch[2]}/${githubUrlRegexMatch[3]}`
     }
 
     const contributors: Contributor[] = repositoryContributors.map<Contributor>(contributor => ({
@@ -132,7 +137,7 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     const url = `https://goproxy.io/github.com/${this.escapeForGoProxy(repo.owner)}/${this.escapeForGoProxy(repo.repo)}/@v/${goproxyVersionStr}.info`
     const response = await fetch(url)
     if (!response.ok) {
-      consola.warn(`Failed to fetch GoProxy version ${goproxyVersionStr} for package ${repo.owner}/${repo.repo}`)
+      consola.error(`Failed to fetch GoProxy version ${goproxyVersionStr} for package ${repo.owner}/${repo.repo}`)
       return null
     }
 
@@ -146,7 +151,7 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     const url = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/${ref}/tooth.json`
     const response = await fetch(url)
     if (!response.ok) {
-      consola.warn(`Failed to fetch tooth.json in ${repo.owner}/${repo.repo} at ref ${ref}`)
+      consola.error(`Failed to fetch tooth.json in ${repo.owner}/${repo.repo} at ref ${ref}`)
       return null
     }
 

@@ -47,7 +47,7 @@ export class EndstoneCppFetcher extends GitHubFetcher {
         const cmakeListsTxtUrl = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/${version.tag_name}/CMakeLists.txt`
         const cmakeListsTxtResp = await fetch(cmakeListsTxtUrl)
         if (!cmakeListsTxtResp.ok) {
-          consola.warn(`Failed to fetch CMakeLists.txt file in ${repo.owner}/${repo.repo} for version ${version.tag_name}`)
+          consola.error(`Failed to fetch CMakeLists.txt file in ${repo.owner}/${repo.repo} for version ${version.tag_name}`)
           continue
         }
 
@@ -70,7 +70,7 @@ export class EndstoneCppFetcher extends GitHubFetcher {
     }
 
     if (versions.length === 0) {
-      consola.warn(`No versions found for package ${repo.owner}/${repo.repo}`)
+      consola.error(`No versions found for package ${repo.owner}/${repo.repo}`)
       return null
     }
 
