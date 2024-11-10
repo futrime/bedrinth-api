@@ -78,7 +78,7 @@ export class RedisClient implements DatabaseClient {
     const qList = q.replaceAll('*', ' ').split(' ').filter(item => item.length > 0).map(item => item.trim())
 
     // Key is the category, value is the list of query items
-    const categoriezedQList: {[key: string]: string[]} = {}
+    const categoriezedQList: { [key: string]: string[] } = {}
 
     for (const qItem of qList) {
       const category = /^[a-z0-9-]+:[a-z0-9-]+$/.test(qItem) ? qItem.split(':')[0] : ''
