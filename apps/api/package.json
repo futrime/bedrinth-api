@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
+    "@types/express": "^5.0.0",
     "@types/morgan": "^1.9.9",
     "consola": "^3.2.3",
     "cors": "^2.8.5",
