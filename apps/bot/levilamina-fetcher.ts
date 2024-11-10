@@ -48,7 +48,6 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     }
 
     if (versions.length === 0) {
-      consola.error(`No versions found for package ${repo.owner}/${repo.repo}`)
       return null
     }
 
@@ -137,7 +136,6 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     const url = `https://goproxy.io/github.com/${this.escapeForGoProxy(repo.owner)}/${this.escapeForGoProxy(repo.repo)}/@v/${goproxyVersionStr}.info`
     const response = await fetch(url)
     if (!response.ok) {
-      consola.error(`Failed to fetch GoProxy version ${goproxyVersionStr} for package ${repo.owner}/${repo.repo}`)
       return null
     }
 
@@ -151,7 +149,6 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     const url = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/${ref}/tooth.json`
     const response = await fetch(url)
     if (!response.ok) {
-      consola.error(`Failed to fetch tooth.json in ${repo.owner}/${repo.repo} at ref ${ref}`)
       return null
     }
 

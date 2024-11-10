@@ -53,7 +53,6 @@ export class EndstonePythonFetcher extends GitHubFetcher {
     }
 
     if (versions.length === 0) {
-      consola.error(`No versions found for package ${repo.owner}/${repo.repo}`)
       return null
     }
 
@@ -130,7 +129,6 @@ export class EndstonePythonFetcher extends GitHubFetcher {
         }
 
         if (pypiProjectRelease.urls.length === 0) {
-          consola.error(`No URLs found for version ${versionStr} for package ${repo.owner}/${repo.repo} from PyPI`)
           continue
         }
 
@@ -159,7 +157,6 @@ export class EndstonePythonFetcher extends GitHubFetcher {
     const url = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/${ref}/pyproject.toml`
     const response = await fetch(url)
     if (!response.ok) {
-      consola.error(`Failed to fetch pyproject.toml in ${repo.owner}/${repo.repo} for ref ${ref}`)
       return null
     }
 
@@ -173,7 +170,6 @@ export class EndstonePythonFetcher extends GitHubFetcher {
     const url = `https://pypi.org/pypi/${name}/json`
     const response = await fetch(url)
     if (!response.ok) {
-      consola.error(`Failed to fetch PyPI project ${name}`)
       return null
     }
 
@@ -186,7 +182,6 @@ export class EndstonePythonFetcher extends GitHubFetcher {
     const url = `https://pypi.org/pypi/${name}/${version}/json`
     const response = await fetch(url)
     if (!response.ok) {
-      consola.error(`Failed to fetch PyPI project release ${name} ${version}`)
       return null
     }
 
