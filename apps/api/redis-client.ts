@@ -75,18 +75,36 @@ export class RedisClient implements DatabaseClient {
 
     let query = this.repository.search()
 
-    if (q.length > 1) {
-      const qList = q.replaceAll('*', ' ').split(' ').filter(item => item.length > 0)
+    const qList = q.replaceAll('*', ' ').split(' ').filter(item => item.length > 0).map(item => item.trim())
+
+    // Key is the category, value is the list of query items
+    const categoriezedQList: {[key: string]: string[]} = {}
+
+    for (const qItem of qList) {
+      const category = /^[a-z0-9-]+:[a-z0-9-]+$/.test(qItem) ? qItem.split(':')[0] : ''
+
+      if (categoriezedQList[category] === undefined) {
+        categoriezedQList[category] = []
+      }
+      categoriezedQList[category].push(qItem)
+    }
+
+    for (const category in categoriezedQList) {
+      // Redis cannot search for query shorter than 2 characters
+      const qList = categoriezedQList[category].filter(item => item.length > 1)
 
       // If the query starts with a plus, it is an exact match
       const optionalQList = qList.filter(item => !item.startsWith('+'))
       const exactQList = qList.filter(item => item.startsWith('+')).map(item => item.slice(1))
 
       for (const qItem of exactQList) {
-        if (/^[a-z0-9-]+:[a-z0-9-]+$/.test(qItem)) {
+        // For category:item, it is an exact match for the tag
+        if (category !== '') {
           query = query.and(subQuery => subQuery
             .or('tags').contains(qItem)
           )
+
+        // Otherwise, it is a pattern match for the name, description, author, or tag
         } else {
           const pattern = `*${qItem}*`
           query = query.and(subQuery => subQuery
@@ -101,10 +119,13 @@ export class RedisClient implements DatabaseClient {
       if (optionalQList.length > 0) {
         query = query.and(subQuery => {
           for (const qItem of optionalQList) {
-            if (/^[a-z0-9-]+:[a-z0-9-]+$/.test(qItem)) {
+            // For category:item, it is a match for the tag
+            if (category !== '') {
               subQuery = subQuery.or(sub2Query => sub2Query
                 .or('tags').contains(qItem)
               )
+
+            // Otherwise, it is a pattern match for the name, description, author, or tag
             } else {
               const pattern = `*${qItem}*`
               subQuery = subQuery.or(sub2Query => sub2Query
