@@ -13,7 +13,7 @@
   "dependencies": {
     "@types/semver": "^7.5.8",
     "consola": "^3.2.3",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "octokit": "^4.0.2",
     "redis": "^4.7.0",
     "redis-om": "^0.4.7",
