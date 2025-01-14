@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 info:
   title: bedrinth-api
-  version: "0.3"
+  version: "3"
 security: []
 paths:
   /packages:
