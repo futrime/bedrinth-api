@@ -83,19 +83,11 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
-  /packages/{source}/{identifier}:
+  /packages/{identifier}:
     get:
       summary: Get a package
       security: []
       parameters:
-        - name: source
-          in: path
-          required: true
-          schema:
-            type: string
-            enum:
-              - github
-              - pypi
         - name: identifier
           in: path
           required: true
@@ -111,8 +103,6 @@ paths:
                   - "$ref": "#/components/schemas/PackageInfo"
                   - type: object
                     properties:
-                      projectUrl:
-                        type: string
                       contributors:
                         type: array
                         items:
@@ -153,7 +143,6 @@ paths:
                             - packageManager
                             - platformVersionRequirement
                     required:
-                      - projectUrl
                       - contributors
                       - versions
                 required:
@@ -208,7 +197,8 @@ components:
             type: string
         avatarUrl:
           type: string
-          nullable: true
+        projectUrl:
+          type: string
         hotness:
           type: number
         updated:
@@ -220,5 +210,6 @@ components:
         - author
         - tags
         - avatarUrl
+        - projectUrl
         - hotness
         - updated
