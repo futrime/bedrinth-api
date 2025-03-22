@@ -7,7 +7,7 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     consola.start('Fetching LeviLamina packages...')
 
     // Just a magic string to search for tooth.json files
-    const query = 'path:/+filename:tooth.json+"format_version"+2+"tooth"+"version"+"info"+"name"+"description"+"author"+"tags"+"github.com/LiteLDev/LeviLamina"'
+    const query = String.raw`path:/+filename:tooth.json+"\"format_version\":"+"\"tooth\":"+"\"version\":"`
 
     for await (const repo of this.searchForRepo(query)) {
       // Skip LeviLamina itself
@@ -51,7 +51,7 @@ export class LeviLaminaFetcher extends GitHubFetcher {
       return null
     }
 
-    let avatarUrl = tooth.info.avatar_url ?? `https://avatars.githubusercontent.com/${repo.owner}`
+    let avatarUrl = tooth.info?.avatar_url ?? `https://avatars.githubusercontent.com/${repo.owner}`
 
     // Check if avatarUrl is relative and make it absolute if needed
     if (!/^(?:[a-z+]+:)?\//i.test(avatarUrl)) {
@@ -71,12 +71,12 @@ export class LeviLaminaFetcher extends GitHubFetcher {
 
     const packageInfo: Package = {
       identifier: `github.com/${repo.owner}/${repo.repo}`,
-      name: tooth.info.name,
-      description: tooth.info.description,
+      name: tooth.info?.name ?? repository.name,
+      description: tooth.info?.description ?? repository.description ?? '',
       author: repo.owner,
       tags: [
         'platform:levilamina',
-        ...tooth.info.tags,
+        ...tooth.info?.tags ?? [],
         ...(repository.topics ?? [])
       ],
       avatarUrl,
@@ -115,12 +115,13 @@ export class LeviLaminaFetcher extends GitHubFetcher {
           continue
         }
 
+        const matchingVariant = toothResp.variants?.find(v => v.dependencies?.['github.com/LiteLDev/LeviLamina'] !== undefined)
         versionList.push({
           version: versionStr,
           releasedAt: new Date(goproxyResp.Time).toISOString(),
           source: 'github',
           packageManager: 'lip',
-          platformVersionRequirement: toothResp.dependencies?.['github.com/LiteLDev/LeviLamina'] ?? toothResp.prerequisites?.['github.com/LiteLDev/LeviLamina'] ?? ''
+          platformVersionRequirement: matchingVariant?.dependencies?.['github.com/LiteLDev/LeviLamina'] ?? ''
         })
       } catch (error) {
         consola.error(`Failed to fetch version ${goproxyVersionStr} for package ${repo.owner}/${repo.repo}:`, error)
@@ -153,11 +154,80 @@ export class LeviLaminaFetcher extends GitHubFetcher {
     }
 
     const data = await response.json()
-    return data as Tooth
+
+    const tooth = this.migrateTooth(data as ToothBase)
+
+    return tooth
+  }
+
+  private migrateTooth (legacyTooth: ToothBase): Tooth {
+    if (legacyTooth.format_version === 1) {
+      const legacyToothV1 = legacyTooth as ToothSchemaV1
+
+      return {
+        format_version: 3,
+        info: {
+          name: legacyToothV1.information?.name ?? '',
+          description: legacyToothV1.information?.description ?? '',
+          tags: [],
+          avatar_url: ''
+        },
+        variants: [{
+          dependencies: {
+            'github.com/LiteLDev/LeviLamina': legacyToothV1.dependencies?.['github.com/LiteLDev/LeviLamina']
+              ?.map(inner => inner.join(' '))
+              .join(' || ') ?? ''
+          }
+        }]
+      }
+    } else if (legacyTooth.format_version === 2) {
+      const legacyToothV2 = legacyTooth as ToothSchemaV2
+
+      return {
+        format_version: 3,
+        info: {
+          name: legacyToothV2.info.name,
+          description: legacyToothV2.info.description,
+          tags: legacyToothV2.info.tags,
+          avatar_url: legacyToothV2.info.avatar_url
+        },
+        variants: [{
+          dependencies: {
+            'github.com/LiteLDev/LeviLamina': legacyToothV2.dependencies?.['github.com/LiteLDev/LeviLamina'] ?? legacyToothV2.prerequisites?.['github.com/LiteLDev/LeviLamina'] ?? ''
+          }
+        }]
+      }
+    } else if (legacyTooth.format_version === 3) {
+      return legacyTooth as Tooth
+    } else {
+      throw new Error(`Unsupported tooth format version: ${legacyTooth.format_version}`)
+    }
   }
 }
 
-interface Tooth {
+interface ToothBase {
+  format_version: number
+}
+
+interface Tooth extends ToothBase {
+  format_version: 3
+  info?: {
+    name?: string
+    description?: string
+    tags?: string[]
+    avatar_url?: string
+  }
+  variants?: Array<{
+    label?: string
+    platform?: string
+    dependencies?: {
+      'github.com/LiteLDev/LeviLamina'?: string
+    }
+  }>
+}
+
+interface ToothSchemaV2 extends ToothBase {
+  format_version: 2
   info: {
     name: string
     description: string
@@ -169,6 +239,17 @@ interface Tooth {
   }
   prerequisites?: {
     'github.com/LiteLDev/LeviLamina'?: string
+  }
+}
+
+interface ToothSchemaV1 {
+  format_version: 1
+  information?: {
+    name?: string
+    description?: string
+  }
+  dependencies?: {
+    'github.com/LiteLDev/LeviLamina'?: string[][]
   }
 }
 

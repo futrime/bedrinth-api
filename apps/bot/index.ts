@@ -2,9 +2,9 @@ import consola from 'consola'
 import 'dotenv/config'
 import { EndstoneCppFetcher } from './endstone-cpp-fetcher.js'
 import { EndstonePythonFetcher } from './endstone-python-fetcher.js'
-import { LeviLaminaFetcher } from './levilamina-fetcher.js'
 import { PackageFetcher } from './package-fetcher.js'
 import { RedisClient } from './redis-client.js'
+import { LeviLaminaFetcher } from './levilamina-fetcher.js'
 
 interface Config {
   databaseUrl: string
@@ -49,6 +49,9 @@ async function main (): Promise<void> {
 
   // Initial fetch
   await fetchAndSave()
+    .catch((error) => {
+      consola.error(error)
+    })
 
   // Set up interval for subsequent fetches
   setInterval(() => {
