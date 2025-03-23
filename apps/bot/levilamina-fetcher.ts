@@ -51,12 +51,18 @@ export class LeviLaminaFetcher extends GitHubFetcher {
       return null
     }
 
-    let avatarUrl = tooth.info?.avatar_url ?? `https://avatars.githubusercontent.com/${repo.owner}`
+    let avatarUrl = tooth.info?.avatar_url ?? ''
+
+    // If empty, use the repository owner's avatar
+    if (avatarUrl === '') {
+      avatarUrl = `https://avatars.githubusercontent.com/${repo.owner}`
+    }
 
     // Check if avatarUrl is relative and make it absolute if needed
     if (!/^(?:[a-z+]+:)?\//i.test(avatarUrl)) {
       avatarUrl = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/HEAD/${avatarUrl}`
     }
+
     // Check if avatarUrl starts with https://github.com/{owner}/{repo}/blob and convert it to raw.githubusercontent.com
     const githubUrlRegex = /^https:\/\/github\.com\/([A-Za-z0-9-]+)\/([\w.-]+)\/blob\/(.+)/
     const githubUrlRegexMatch = githubUrlRegex.exec(avatarUrl)
